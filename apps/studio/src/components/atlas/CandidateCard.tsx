@@ -1,4 +1,5 @@
 import type { FunctionCandidate } from "@/api/types";
+import { PublisherEvidence } from "./PublisherEvidence";
 import { truncateMiddle } from "@/lib/atlas/hex";
 import { CopyButton, Mono, Pill } from "./primitives";
 
@@ -6,10 +7,12 @@ export function CandidateCard({
   c,
   selector,
   index,
+  allowPublisherEvidence = true,
 }: {
   c: FunctionCandidate;
   selector: string;
   index?: number;
+  allowPublisherEvidence?: boolean;
 }) {
   const p = c.provenance;
   const rows: [string, string, boolean][] = [
@@ -48,6 +51,7 @@ export function CandidateCard({
           </div>
         ))}
       </dl>
+      {allowPublisherEvidence && <PublisherEvidence candidate={c} selector={selector} />}
     </article>
   );
 }
