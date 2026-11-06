@@ -8,6 +8,7 @@
     "test": "vitest run src",
     "dry-run": "node --env-file-if-exists=../.env dist/cli.js dry-run",
     "import": "node --env-file-if-exists=../.env dist/cli.js import",
+    "import:events": "node --env-file-if-exists=../.env dist/event-import.js",
     "verify": "node --env-file-if-exists=../.env dist/cli.js verify",
     "doctor": "node --env-file-if-exists=../.env dist/cli.js doctor",
     "snapshot": "node --env-file-if-exists=../.env dist/cli.js snapshot"

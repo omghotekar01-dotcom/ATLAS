@@ -1,6 +1,7 @@
 export * from "./checkpoint.js";
 export * from "./cli.js";
 export * from "./fetch.js";
+export * from "./event-write.js";
 export * from "./normalize.js";
 export * from "./pipeline.js";
 export * from "./report.js";
