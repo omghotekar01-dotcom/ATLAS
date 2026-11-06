@@ -5,7 +5,7 @@ Track: [Mirror something Ethereum depends on](https://ethglobal.com/events/mumba
 ## Live data vs analyzed data (2026-11-06)
 
 | Measure                                   | Verified count |
-| ----------------------------------------- | -------------: |
+| ----------------------------------------- | --------------: |
 | Live Arkiv function records               |          **1** |
 | Live Arkiv event records                  |          **0** |
 | Live writes with read-back verification   |          **1** |
