@@ -103,5 +103,5 @@ seven route URLs. The build warning above does not fail the build.
 - [ ] `GET /health` returns `status: "ok"` and `arkiv.connected: true`.
 - [ ] The verified function selector returns the real entity with matching
       provenance; an unrelated selector returns an empty result.
-- [ ] Direct refresh works for all seven routes; browser CORS accepts the exact
+- [ ] Direct refresh works for all ten routes; browser CORS accepts the exact
       Studio origin and rejects an unlisted origin.

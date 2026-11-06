@@ -1,6 +1,9 @@
 import type {
   CalldataDecodeResult,
   CommunityLookupResult,
+  SwarmArtifact,
+  ExplainResult,
+  EnsV2RoleResult,
   EventLookupResult,
   FunctionLookupResult,
   FunctionSearchResult,
@@ -45,6 +48,39 @@ export function formatCommunity(result: CommunityLookupResult): string {
     ),
     ...(result.truncated ? ["Additional candidates may exist; output was limited."] : []),
     ...warningLines(result.warnings),
+  ].join("\n");
+}
+
+export function formatEnsV2Role(result: EnsV2RoleResult): string {
+  return [
+    `ENSv2 Sepolia EAC on-chain check at block ${result.blockNumber}`,
+    `Registry: ${result.registry} (operator-configured)`,
+    `Account: ${result.account}`,
+    `Resource: ${result.resource} · Required role bitmap: ${result.requiredRoles}`,
+    `Observed role bitmap: ${result.roleBitmap}`,
+    `Has required roles: ${result.authorized ? "YES" : "NO"}`,
+    ...result.warnings,
+  ].join("\n");
+}
+
+export function formatExplain(result: ExplainResult): string {
+  return [
+    `0G Private Computer AI interpretation (model: ${result.model})`,
+    `Provider request ID: ${result.requestId ?? "not supplied"}`,
+    "This is NOT verified on-chain evidence or a security decision.",
+    result.explanation,
+    ...result.warnings,
+  ].join("\n");
+}
+
+export function formatSwarmArtifact(result: SwarmArtifact): string {
+  return [
+    `Swarm artifact ${result.reference} (read-only Bee API retrieval)`,
+    `Size: ${result.bytes} bytes`,
+    `Content type: ${result.contentType}`,
+    `SHA-256 of retrieved bytes: ${result.sha256}`,
+    "Use --json to obtain the exact bytes encoded as contentBase64.",
+    "This does not prove the artifact is linked to a canonical Arkiv record.",
   ].join("\n");
 }
 

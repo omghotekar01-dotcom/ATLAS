@@ -1,3 +1,4 @@
+import { anonymousTransaction } from "@/lib/atlas/anon-rpc";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { atlasClient } from "@/api/atlasClient";
@@ -183,6 +184,11 @@ function Result({ result }: { result: ApiResult<TransactionInvestigation> | null
 }
 
 function Transactions() {
+  const [privacy, setPrivacy] = useState(false);
+  const [bootstrap, setBootstrap] = useState("");
+  const [target, setTarget] = useState("");
+  const [anon, setAnon] = useState<Awaited<ReturnType<typeof anonymousTransaction>> | null>(null);
+  const [counts, setCounts] = useState({ anon: 0, failed: 0, direct: 0 });
   const [hash, setHash] = useState("");
   const [network, setNetwork] = useState<(typeof NETWORKS)[number]["label"]>("Ethereum Mainnet");
   const [result, setResult] = useState<ApiResult<TransactionInvestigation> | null>(null);
@@ -202,9 +208,22 @@ function Transactions() {
     }
 
     setBusy(true);
-    const response = await atlasClient.analyzeTransaction({ chainId: chain.id, hash });
-    setResult(response);
-    setBusy(false);
+    setResult(null);
+    setAnon(null);
+    try {
+      if (privacy) {
+        setAnon(await anonymousTransaction(bootstrap, target, chain.id, hash));
+        setCounts((current) => ({ ...current, anon: current.anon + 1 }));
+        return;
+      }
+      setCounts((current) => ({ ...current, direct: current.direct + 1 }));
+      setResult(await atlasClient.analyzeTransaction({ chainId: chain.id, hash }));
+    } catch (error) {
+      if (privacy) setCounts((current) => ({ ...current, failed: current.failed + 1 }));
+      setLocalError(error instanceof Error ? error.message : "Transaction request failed.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -256,6 +275,52 @@ function Transactions() {
               advertised.
             </p>
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={privacy}
+              disabled={busy}
+              onChange={(event) => {
+                setPrivacy(event.target.checked);
+                setResult(null);
+                setAnon(null);
+              }}
+            />
+            Use Nym privacy mode
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {privacy
+              ? "Nym reads the transaction in this browser. Specifier bootstrap is direct. Decode and receipts are excluded. No direct fallback."
+              : "Standard analysis uses the API's configured direct RPC."}
+          </p>
+          {privacy && (
+            <div className="space-y-2">
+              <label className="block text-sm">
+                Public Mainnet bootstrap RPC
+                <input
+                  type="url"
+                  className="block w-full rounded border border-input bg-background px-2 py-1"
+                  value={bootstrap}
+                  onChange={(event) => setBootstrap(event.target.value)}
+                  disabled={busy}
+                />
+              </label>
+              <label className="block text-sm">
+                Public destination RPC
+                <input
+                  type="url"
+                  className="block w-full rounded border border-input bg-background px-2 py-1"
+                  value={target}
+                  onChange={(event) => setTarget(event.target.value)}
+                  disabled={busy}
+                />
+              </label>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground" role="status">
+            This page session: {counts.anon} Nym lookups completed, {counts.failed} failed,{" "}
+            {counts.direct} direct analyses requested, 0 automatic fallbacks.
+          </p>
           {localError && <p className="text-sm text-error">{localError}</p>}
           <Button disabled={busy} className="rounded-xl" onClick={analyze}>
             {busy ? "Analyzing…" : "Analyze transaction"}
@@ -263,6 +328,13 @@ function Transactions() {
         </Panel>
         <div className="space-y-4 lg:col-span-2">
           <Result result={result} />
+          {anon && (
+            <Panel className="space-y-2">
+              <h2 className="font-semibold">Nym RPC transaction lookup</h2>
+              <p className="break-all font-mono text-xs">{anon.hash}</p>
+              <p className="text-sm">Block {anon.block ?? "pending"}</p>
+            </Panel>
+          )}
         </div>
       </div>
     </>

@@ -65,7 +65,7 @@ Do not run `import --confirm-write` without a separately approved write plan.
 - [x] Wallet and reproducible query documented.
 - [x] Required Arkiv rubric files created.
 - [x] SDK integration and one real Rabdi write/read-back proven.
-- [ ] Studio deployed and all seven routes/browser API calls tested.
+- [ ] Studio deployed and all ten routes/browser API calls tested.
 - [ ] Live dataset coverage expanded with separately approved writes
       (strongly recommended, **not a qualification requirement for one record**).
 - [ ] Event-write path tested and event entities imported (recommended).

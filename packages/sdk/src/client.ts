@@ -2,14 +2,22 @@ import {
   ApiErrorSchema,
   CalldataDecodeResultSchema,
   CommunityLookupResultSchema,
+  SwarmArtifactSchema,
+  ExplainResultSchema,
+  EnsV2RoleResultSchema,
   EventLookupResultSchema,
   FunctionLookupResultSchema,
   FunctionSearchResultSchema,
   HealthResponseSchema,
+  IntegrationStatusSchema,
+  type IntegrationStatus,
   LogDecodeResultSchema,
   TransactionInvestigationSchema,
   type CalldataDecodeResult,
   type CommunityLookupResult,
+  type SwarmArtifact,
+  type ExplainResult,
+  type EnsV2RoleResult,
   type EventLookupResult,
   type FunctionLookupResult,
   type FunctionSearchResult,
@@ -163,6 +171,30 @@ export class AtlasClient {
       `/v1/community/4byte/${encodeURIComponent(selector)}`,
       CommunityLookupResultSchema,
     );
+  }
+
+  checkEnsV2Role(
+    account: string,
+    options: { resource?: string; role?: string; name?: string } = {},
+  ): Promise<EnsV2RoleResult> {
+    return this.request(`/v1/ensv2/roles/${encodeURIComponent(account)}`, EnsV2RoleResultSchema, {
+      query: { resource: options.resource, role: options.role, name: options.name },
+    });
+  }
+
+  explainCalldata(calldata: string): Promise<ExplainResult> {
+    return this.request("/v1/explain", ExplainResultSchema, {
+      method: "POST",
+      body: { calldata },
+    });
+  }
+
+  integrationStatus(): Promise<IntegrationStatus> {
+    return this.request("/v1/integrations/status", IntegrationStatusSchema);
+  }
+
+  getSwarmArtifact(reference: string): Promise<SwarmArtifact> {
+    return this.request(`/v1/artifacts/${encodeURIComponent(reference)}`, SwarmArtifactSchema);
   }
 
   decodeCalldata(calldata: string): Promise<CalldataDecodeResult> {

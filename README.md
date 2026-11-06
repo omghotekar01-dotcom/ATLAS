@@ -120,3 +120,7 @@ ATLAS includes a **read-only, non-canonical** community selector lookup at
 `GET /v1/community/4byte/:selector`, in `atlas 4byte`, and in the Studio Explorer.
 Community candidates never enter the Arkiv canonical mirror; they are unverified.
 See [4byte documentation](docs/FOURBYTE_AND_CLI.md).
+
+## Sponsor release and verification
+
+See the [sponsor readiness matrix](docs/SPONSOR_READINESS.md), [build and test commands](docs/TESTING.md), and [deployment checklist](docs/DEPLOYMENT.md). Studio exposes ten pages, including Developers, Integrations and Settings.

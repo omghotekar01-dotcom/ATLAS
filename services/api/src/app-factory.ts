@@ -5,13 +5,17 @@ import fp from "fastify-plugin";
 import { ZodError } from "zod";
 import {
   AnalyzeTransactionRequestSchema,
+  ExplainRequestSchema,
   ApiErrorSchema,
   DecodeCalldataRequestSchema,
   DecodeLogsRequestSchema,
   HealthResponseSchema,
+  IntegrationStatusSchema,
+  type IntegrationStatus,
   InvalidInputError,
   presentAtlasError,
   RateLimitedError,
+  UpstreamUnavailableError,
   AtlasError,
   toApiError,
   type ApiError,
@@ -39,6 +43,9 @@ import {
 import { createDefaultDependencies, type ApiDependencies } from "./deps.js";
 import { investigateTransaction } from "./transaction.js";
 import { withTimeout } from "./timeout.js";
+import { fetchSwarmArtifact } from "./swarm.js";
+import { explainWithZeroG } from "./zero-g.js";
+import { parseRoleUint256, readEnsV2Role } from "./ensv2.js";
 
 export interface CreateAppOptions {
   readonly dependencies?: ApiDependencies;
@@ -48,6 +55,12 @@ export interface CreateAppOptions {
   readonly upstreamTimeoutMs?: number;
   /** Injected in tests; real service queries read-only community endpoint. */
   readonly communityLookup?: typeof lookupCommunity;
+  /** Read-only Swarm Bee override for deterministic route tests. */
+  readonly swarmLookup?: typeof fetchSwarmArtifact;
+  /** Injected 0G adapter for deterministic contract tests. */
+  readonly zeroGExplain?: typeof explainWithZeroG;
+  /** Test override; real path reads ENSv2 EAC roles on Sepolia. */
+  readonly ensV2RoleLookup?: typeof readEnsV2Role;
   /** Browser origin policy. Defaults to dev origins plus `ATLAS_CORS_ORIGINS`. */
   readonly cors?: CorsPolicyOptions;
 }
@@ -232,6 +245,45 @@ export function createApp(options: CreateAppOptions = {}): FastifyInstance {
     });
   });
 
+  app.get("/v1/integrations/status", async () => {
+    const env = process.env;
+    const chain = env.ATLAS_ENSV2_CHAIN_ID?.trim() || "11155111";
+    const probe = (work: Promise<unknown>): Promise<IntegrationStatus["arkiv"]> =>
+      withTimeout(work, upstreamTimeoutMs, "Integration probe timed out.").then(
+        () => "connected",
+        (error: unknown) => (error instanceof RateLimitedError ? "rate-limited" : "disconnected"),
+      );
+    const [arkiv, swarm, ensv2] = await Promise.all([
+      probe(
+        dependencies.health().then((health) => {
+          if (!health.arkiv.connected) throw new UpstreamUnavailableError("Arkiv disconnected.");
+        }),
+      ),
+      !env.ATLAS_BEE_URL
+        ? "unconfigured"
+        : env.ATLAS_BEE_PROBE_REFERENCE
+          ? probe((options.swarmLookup ?? fetchSwarmArtifact)(env.ATLAS_BEE_PROBE_REFERENCE))
+          : "configured-unprobed",
+      chain !== "1" && chain !== "11155111"
+        ? "unsupported"
+        : !env.ATLAS_ENSV2_REGISTRY || !env[`ATLAS_RPC_URL_${chain}`]
+          ? "unconfigured"
+          : env.ATLAS_ENSV2_PROBE_ACCOUNT
+            ? probe((options.ensV2RoleLookup ?? readEnsV2Role)(env.ATLAS_ENSV2_PROBE_ACCOUNT))
+            : "configured-unprobed",
+    ]);
+    return IntegrationStatusSchema.parse({
+      arkiv,
+      swarm,
+      ensv2,
+      zeroG:
+        env.ATLAS_0G_ALLOW_PUBLIC_EXPLAIN === "true" && env.ATLAS_0G_API_KEY && env.ATLAS_0G_MODEL
+          ? "configured-unprobed"
+          : "unconfigured",
+      anonRpc: "browser-only",
+    });
+  });
+
   app.get("/v1/functions/search", async (request) => {
     const query = request.query as Record<string, string | undefined>;
     const search = query.q?.trim() ?? "";
@@ -255,6 +307,16 @@ export function createApp(options: CreateAppOptions = {}): FastifyInstance {
       (options.communityLookup ?? lookupCommunity)(normalized),
       upstreamTimeoutMs,
       "4byte.directory lookup timed out.",
+    );
+  });
+
+  app.get("/v1/artifacts/:reference", async (request) => {
+    const { reference } = request.params as { reference?: string };
+    if (!reference) throw new InvalidInputError("A Swarm reference is required.");
+    return withTimeout(
+      (options.swarmLookup ?? fetchSwarmArtifact)(reference),
+      upstreamTimeoutMs,
+      "Swarm artifact lookup timed out.",
     );
   });
 
@@ -303,6 +365,45 @@ export function createApp(options: CreateAppOptions = {}): FastifyInstance {
       investigateTransaction(dependencies, body.chainId, body.hash),
       upstreamTimeoutMs,
       "Transaction analysis timed out.",
+    );
+  });
+
+  app.get("/v1/ensv2/roles/:account", async (request) => {
+    const { account } = request.params as { account?: string };
+    if (!account || !/^0x[0-9a-fA-F]{40}$/.test(account)) {
+      throw new InvalidInputError("ENSv2 account must be a 20-byte Ethereum address.");
+    }
+    const q = request.query as { resource?: string; role?: string; name?: string };
+    const resource = parseRoleUint256(q.resource, 0n);
+    const role = parseRoleUint256(q.role, 1n << 24n);
+    if (role === 0n) throw new InvalidInputError("ENSv2 role bitmap must not be zero.");
+    return withTimeout(
+      (options.ensV2RoleLookup ?? readEnsV2Role)(
+        account,
+        q.name === undefined || q.resource !== undefined ? resource.toString() : undefined,
+        role.toString(),
+        undefined,
+        q.name,
+      ),
+      upstreamTimeoutMs,
+      "ENSv2 role verification timed out.",
+    );
+  });
+
+  app.post("/v1/explain", { bodyLimit: 20_000 }, async (request) => {
+    if (!options.zeroGExplain && process.env.ATLAS_0G_ALLOW_PUBLIC_EXPLAIN !== "true") {
+      throw new UpstreamUnavailableError("Public 0G explanation is disabled.");
+    }
+    const { calldata } = ExplainRequestSchema.parse(request.body);
+    const decoded = await withTimeout(
+      decodeCalldata(dependencies.functions, calldata),
+      upstreamTimeoutMs,
+      "Canonical decode timed out before 0G explanation.",
+    );
+    return withTimeout(
+      (options.zeroGExplain ?? explainWithZeroG)(decoded),
+      upstreamTimeoutMs,
+      "0G explanation timed out.",
     );
   });
 

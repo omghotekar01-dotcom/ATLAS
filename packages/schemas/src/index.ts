@@ -5,3 +5,7 @@ export * from "./records.js";
 export * from "./requests.js";
 export * from "./results.js";
 export * from "./community.js";
+export * from "./swarm.js";
+export * from "./ai.js";
+export * from "./ensv2.js";
+export * from "./integrations.js";

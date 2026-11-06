@@ -11,6 +11,9 @@
     { "source": "/events", "destination": "/index.html" },
     { "source": "/transactions", "destination": "/index.html" },
     { "source": "/docs", "destination": "/index.html" },
-    { "source": "/status", "destination": "/index.html" }
+    { "source": "/status", "destination": "/index.html" },
+    { "source": "/developers", "destination": "/index.html" },
+    { "source": "/integrations", "destination": "/index.html" },
+    { "source": "/settings", "destination": "/index.html" }
   ]
 }

@@ -38,5 +38,5 @@ exact Studio HTTPS origin; set `ATLAS_CORS_DEV_ORIGINS=false` for production.
 Redeploy the API if required for environment changes, and verify actual
 browser requests, not just a Vite shell response.
 
-The site has seven routes: `/`, `/explorer`, `/decode`, `/events`,
-`/transactions`, `/docs`, `/status`. Direct refresh of each route must work.
+The site has ten routes: `/`, `/explorer`, `/decode`, `/events`,
+`/transactions`, `/docs`, `/status`, `/developers`, `/integrations`, and `/settings`. Direct refresh of each route must work.

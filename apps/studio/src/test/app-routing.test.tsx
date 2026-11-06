@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, rootRouteId } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
@@ -13,6 +15,9 @@ const ROUTES = [
   "/transactions",
   "/docs",
   "/status",
+  "/developers",
+  "/integrations",
+  "/settings",
 ] as const;
 
 function match(path: string) {
@@ -23,19 +28,23 @@ function match(path: string) {
 // Match routes without running loaders or rendering: loaders may need a server or
 // network the test run lacks, and jsdom never loads the stylesheets React waits on.
 describe("App routing", () => {
+  it("rewrites each Studio deep link to the Vercel entry point", () => {
+    const config = JSON.parse(readFileSync(path.resolve("vercel.json"), "utf8")) as {
+      rewrites: { source: string; destination: string }[];
+    };
+    expect(config.rewrites).toEqual(
+      ROUTES.map((source) => ({ source, destination: "/index.html" })),
+    );
+  });
+
   it("matches a page for / instead of falling back to not found", () => {
     expect(match("/").at(-1)?.routeId).not.toBe(rootRouteId);
   });
 
-  it("retains all seven PRD routes and adds full developer pages", () => {
+  it("matches all ten Studio routes", () => {
     const destinations = NAV.map((entry) => entry.to);
     expect(new Set(destinations).size).toBe(destinations.length);
     for (const path of ROUTES) expect(destinations).toContain(path);
-    for (const path of ["/developers", "/integrations", "/settings"]) {
-      expect(destinations).toContain(path);
-      expect(match(path).at(-1)?.routeId).toBe(path);
-    }
-
     for (const path of ROUTES) {
       const matches = match(path);
       expect(matches.at(-1)?.routeId, path).toBe(path === "/" ? "/" : path);

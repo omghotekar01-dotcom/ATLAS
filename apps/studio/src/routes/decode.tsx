@@ -40,19 +40,42 @@ export const Route = createFileRoute("/decode")({
 const EXAMPLE =
   "0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000";
 
+type Explanation = Awaited<ReturnType<typeof atlasClient.explainCalldata>>;
+
 function Decoder() {
   const [raw, setRaw] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ApiResult<DecodeCalldataResponse> | null>(null);
+  const [explanation, setExplanation] = useState<Explanation | null>(null);
+  const [explainLoading, setExplainLoading] = useState(false);
   const { sample } = useSampleMode();
   const a = analyzeCalldata(raw);
 
   useEffect(() => {
     setResult(null);
+    setExplanation(null);
   }, [sample]);
+
+  async function explain() {
+    if (
+      !a.ok ||
+      sample ||
+      result?.kind !== "ok" ||
+      result.data.decoded.every((attempt) => attempt.decodeStatus !== "success")
+    )
+      return;
+    setExplainLoading(true);
+    setExplanation(null);
+    try {
+      setExplanation(await atlasClient.explainCalldata(a.normalized));
+    } finally {
+      setExplainLoading(false);
+    }
+  }
 
   async function run() {
     if (!a.ok) return;
+    setExplanation(null);
     if (sample) {
       const d = sampleDecode(a.selector, a.words);
       setResult(d.decoded.length ? { kind: "ok", data: d, sample: true } : { kind: "empty" });
@@ -95,6 +118,7 @@ function Decoder() {
             onChange={(e) => {
               setRaw(e.target.value);
               setResult(null);
+              setExplanation(null);
             }}
             rows={8}
             spellCheck={false}
@@ -159,6 +183,23 @@ function Decoder() {
       </div>
 
       <div className="mt-6 space-y-4" aria-live="polite">
+        {explanation && explanation.kind !== "ok" && <ResultState result={explanation} />}
+        {explanation?.kind === "ok" && (
+          <Panel>
+            <h2 className="font-semibold">0G AI interpretation — not verified evidence</h2>
+            <p className="mt-2 break-words text-sm text-foreground">
+              {explanation.data.explanation}
+            </p>
+            <p className="mt-3 break-all text-xs text-muted-foreground">
+              Model: {explanation.data.model} · Provider ID:{" "}
+              {explanation.data.requestId ?? "not supplied"}
+            </p>
+            <p className="mt-2 text-xs text-warning">
+              Only the canonical decode above is deterministic. AI is not contract identity or
+              safety proof.
+            </p>
+          </Panel>
+        )}
         {result && result.kind !== "ok" && <ResultState result={result} />}
         {result?.kind === "ok" && (
           <>
@@ -170,7 +211,20 @@ function Decoder() {
                 </h2>
                 {result.sample && <SampleBadge />}
               </div>
-              <CopyButton value={JSON.stringify(result.data, null, 2)} label="Copy JSON" />
+              <div className="flex items-center gap-2">
+                {!sample &&
+                  result.data.decoded.some((attempt) => attempt.decodeStatus === "success") && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={explain}
+                      disabled={explainLoading}
+                    >
+                      {explainLoading ? "Requesting 0G…" : "Explain with 0G (opt-in)"}
+                    </Button>
+                  )}
+                <CopyButton value={JSON.stringify(result.data, null, 2)} label="Copy JSON" />
+              </div>
             </div>
             {result.data.ambiguous && (
               <Banner

@@ -38,3 +38,10 @@ steps are approved bulk imports, event writes and refresh automation."
 
 Present the production API, GitHub source/test evidence and Rabdi transaction.
 Never represent a fixture screenshot as an Arkiv-backed live result.
+
+## Recording checklist for the current evidence
+
+1. Open the public API health and canonical lookup for `0x9010d07c`. Show the matching function and Arkiv provenance, then open the Rabdi receipt linked in [live proof](arkiv-live-proof.md).
+2. In Studio, demonstrate the canonical decode workflow. Label local samples and any unverified community suggestions on screen.
+3. Show a sponsor flow only after its real evidence has been captured. Read the reference, request ID or block on screen and explain what it establishes.
+4. Record narration and the tested deployment URLs. The team uploads the demo and submits through the Hacker Dashboard.

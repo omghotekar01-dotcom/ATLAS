@@ -90,3 +90,7 @@ dataset `openzeppelin-contracts@efaa6f78ab1d-2026-11-06`.
   allowlisted source identity, checkpoint, explicit approval and read-back.
 - No Sourcify data or Sourcify-derived records were used.
 - Full evidence: [`docs/arkiv-live-proof.md`](../docs/arkiv-live-proof.md).
+
+## Swarm artifact links
+
+The separate `atlas.swarm-artifacts` schema indexes the public Bee `reference` and stores `sha256` and `sourceId`. The trusted-creator query never changes canonical signature records. See [the Swarm proof procedure](swarm.md).

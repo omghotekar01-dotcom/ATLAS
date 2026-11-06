@@ -46,4 +46,4 @@ Passing means all four requests returned the expected JSON, real Arkiv connectiv
 4. Identify the **new** Vercel deployment by commit SHA and unique deployment URL.
 5. Test the unique URL first. If healthy, verify/promote the production domain; then test it again.
 6. Update issue #1 with exact results and unresolved problems.
-7. Deploy and verify Studio afterward, including all seven routes and the final exact CORS origin.
+7. Deploy and verify Studio afterward, including all ten routes and the final exact CORS origin.

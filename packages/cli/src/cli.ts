@@ -5,6 +5,9 @@ import {
   LogInputSchema,
   type CalldataDecodeResult,
   type CommunityLookupResult,
+  type SwarmArtifact,
+  type ExplainResult,
+  type EnsV2RoleResult,
   type EventLookupResult,
   type FunctionLookupResult,
   type FunctionSearchResult,
@@ -16,6 +19,9 @@ import {
 
 import {
   formatCommunity,
+  formatSwarmArtifact,
+  formatExplain,
+  formatEnsV2Role,
   formatDecode,
   formatEvent,
   formatHealth,
@@ -32,6 +38,12 @@ export interface CliClient {
   lookupFunction(selector: string): Promise<FunctionLookupResult>;
   /** Optional only to keep existing injected test doubles backwards compatible. */
   lookupCommunity?(selector: string): Promise<CommunityLookupResult>;
+  getSwarmArtifact?(reference: string): Promise<SwarmArtifact>;
+  explainCalldata?(calldata: string): Promise<ExplainResult>;
+  checkEnsV2Role?(
+    account: string,
+    options: { resource?: string; role?: string; name?: string },
+  ): Promise<EnsV2RoleResult>;
   searchFunctions(
     query: string,
     options: { limit?: number; cursor?: string },
@@ -207,6 +219,74 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
           return client.lookupCommunity(selector);
         },
         formatCommunity,
+        Boolean(command.opts().json),
+      );
+    });
+
+  program
+    .command("ens-role")
+    .alias("publisher")
+    .option("--name <name>", "resolve a registered .eth publisher and check its role")
+    .argument("<account>", "Ethereum address to check against configured ENSv2 EAC registry")
+    .option("--resource <decimal>", "ENSv2 EAC resource ID (0=root)")
+    .option("--role <decimal>", "role bitmap (default ROLE_SET_RESOLVER)")
+    .option("--json", "print block-evidenced role JSON")
+    .description("Read real ENSv2 permissioned-registry role state without writing")
+    .action(async (account: string, _options: unknown, command: Command) => {
+      await perform(
+        async () => {
+          const client = clientFor();
+          if (!client.checkEnsV2Role) throw new UsageError("ENSv2 role lookup is not available.");
+          const { resource, role, name } = command.opts<{
+            resource?: string;
+            role?: string;
+            name?: string;
+          }>();
+          return client.checkEnsV2Role(account, {
+            ...(resource === undefined ? {} : { resource }),
+            ...(role === undefined ? {} : { role }),
+            ...(name === undefined ? {} : { name }),
+          });
+        },
+        formatEnsV2Role,
+        Boolean(command.opts().json),
+      );
+    });
+
+  program
+    .command("explain")
+    .argument("<calldata>", "public EVM calldata to decode and explain with 0G")
+    .option("--json", "print full evidence-separated JSON")
+    .description("Request real opt-in 0G AI interpretation of canonical decoded calldata")
+    .action(async (calldata: string, _options: unknown, command: Command) => {
+      await perform(
+        async () => {
+          const client = clientFor();
+          if (!client.explainCalldata)
+            throw new UsageError("This API client has no 0G explain capability.");
+          return client.explainCalldata(calldata);
+        },
+        formatExplain,
+        Boolean(command.opts().json),
+      );
+    });
+
+  program
+    .command("artifact")
+    .argument("<reference>", "64-hex public Swarm reference")
+    .option("--json", "print downloaded artifact metadata and base64 data")
+    .description(
+      "Read a public Swarm artifact from the configured Bee API; no upload or Arkiv write",
+    )
+    .action(async (reference: string, _options: unknown, command: Command) => {
+      await perform(
+        async () => {
+          const client = clientFor();
+          if (!client.getSwarmArtifact)
+            throw new UsageError("This API client has no Swarm artifact reader.");
+          return client.getSwarmArtifact(reference);
+        },
+        formatSwarmArtifact,
         Boolean(command.opts().json),
       );
     });

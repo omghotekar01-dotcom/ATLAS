@@ -16,3 +16,4 @@ export {
 } from "./deps.js";
 export { investigateTransaction } from "./transaction.js";
 export { withTimeout } from "./timeout.js";
+export { fetchSwarmArtifact } from "./swarm.js";

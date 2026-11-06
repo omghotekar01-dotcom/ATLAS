@@ -30,8 +30,8 @@ separate approval gate.
 
 [`apps/studio/vercel.json`](../apps/studio/vercel.json) contains those build
 settings and the SPA fallback rewrite to `/index.html`. The fallback is needed
-for direct navigation and refresh on all seven routes: `/`, `/explorer`,
-`/decode`, `/events`, `/transactions`, `/docs`, and `/status`.
+for direct navigation and refresh on all ten routes: `/`, `/explorer`,
+`/decode`, `/events`, `/transactions`, `/docs`, `/status`, `/developers`, `/integrations`, and `/settings`.
 
 Add one **Production** environment variable:
 

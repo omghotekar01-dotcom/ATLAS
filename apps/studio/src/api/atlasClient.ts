@@ -2,14 +2,19 @@ import {
   ApiErrorSchema,
   CalldataDecodeResultSchema,
   CommunityLookupResultSchema,
+  SwarmArtifactSchema,
+  ExplainResultSchema,
+  EnsV2RoleResultSchema,
   EventLookupResultSchema,
   FunctionLookupResultSchema,
   FunctionSearchResultSchema,
   HealthResponseSchema,
+  IntegrationStatusSchema,
   LogDecodeResultSchema,
   TransactionInvestigationSchema,
 } from "@atlas/schemas";
 import { z } from "zod";
+import type { SwarmArtifact, ExplainResult, EnsV2RoleResult } from "@atlas/schemas";
 import type {
   ApiResult,
   CalldataDecodeResult,
@@ -96,6 +101,7 @@ async function request<T>(
 }
 
 export const atlasClient = {
+  integrationStatus: () => request("/v1/integrations/status", IntegrationStatusSchema),
   getFunctionBySelector: (selector: string) =>
     request<FunctionLookupResult>(
       `/v1/functions/${encodeURIComponent(selector)}`,
@@ -119,6 +125,21 @@ export const atlasClient = {
       undefined,
       (data) => data.candidates.length === 0,
     ),
+
+  checkEnsV2Role: (account: string, name?: string) =>
+    request<EnsV2RoleResult>(
+      `/v1/ensv2/roles/${encodeURIComponent(account)}${name ? `?name=${encodeURIComponent(name)}` : ""}`,
+      EnsV2RoleResultSchema,
+    ),
+
+  explainCalldata: (calldata: string) =>
+    request<ExplainResult>("/v1/explain", ExplainResultSchema, {
+      method: "POST",
+      body: JSON.stringify({ calldata }),
+    }),
+
+  getSwarmArtifact: (reference: string) =>
+    request<SwarmArtifact>(`/v1/artifacts/${encodeURIComponent(reference)}`, SwarmArtifactSchema),
 
   decodeCalldata: (calldata: string) =>
     request<CalldataDecodeResult>(
