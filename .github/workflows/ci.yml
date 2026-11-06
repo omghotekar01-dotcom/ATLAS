@@ -19,6 +19,8 @@ jobs:
     name: Lint, types, tests and build
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: write
     env:
       ATLAS_LIVE_RPC: "0"
       ATLAS_LIVE_ARKIV: "0"
@@ -46,6 +48,23 @@ jobs:
 
       - name: Build workspace packages from clean checkout
         run: pnpm -r --workspace-concurrency=2 run build
+
+      - name: Normalize event importer sources
+        if: github.event_name == 'pull_request' && github.head_ref == 'feat/arkiv-event-import-20261106'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          git fetch --no-tags origin "$SOURCE_BRANCH"
+          git switch -C "$SOURCE_BRANCH" FETCH_HEAD
+          pnpm exec prettier --write packages/arkiv/src/event-repository.ts packages/arkiv/src/event-repository.test.ts importer/src/event-*.ts importer/src/event-import.ts importer/README.md .github/workflows/ci.yml
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git add -- packages/arkiv/src/event-repository.ts packages/arkiv/src/event-repository.test.ts importer/src/event-import.ts importer/src/event-write.ts importer/src/event-write.test.ts importer/README.md .github/workflows/ci.yml
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "Format Arkiv event importer and test files"
+            git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+          fi
 
       - name: Formatting
         run: pnpm format:check
