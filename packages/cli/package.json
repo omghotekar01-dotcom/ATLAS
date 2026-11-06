@@ -1,0 +1,24 @@
+{
+  "name": "@atlas/cli",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "atlas": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @atlas/schemas build && pnpm --filter @atlas/sdk build && tsc -p tsconfig.test.json",
+    "test": "vitest run src",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@atlas/schemas": "workspace:*",
+    "@atlas/sdk": "workspace:*",
+    "commander": "^14.0.2"
+  },
+  "devDependencies": {
+    "vitest": "latest"
+  }
+}

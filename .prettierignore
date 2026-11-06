@@ -1,0 +1,7 @@
+BACKLOG.md
+plan.md
+PRD.md
+pnpm-lock.yaml
+apps/studio/src/routeTree.gen.ts
+**/dist/**
+importer/.atlas-checkpoints/

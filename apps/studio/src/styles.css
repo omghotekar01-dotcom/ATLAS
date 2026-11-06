@@ -1,0 +1,123 @@
+@import "tailwindcss" source(none);
+@source "./";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-elevated: var(--elevated);
+  --color-nav: var(--nav);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:root,
+.dark {
+  --radius: 0.75rem;
+  --background: oklch(0.155 0.012 250); /* #0B0E12 */
+  --nav: oklch(0.195 0.014 250); /* #11161D */
+  --card: oklch(0.215 0.016 250); /* #151B23 */
+  --elevated: oklch(0.26 0.018 250); /* #1D2530 */
+  --foreground: oklch(0.967 0.004 250); /* #F3F5F7 */
+  --card-foreground: var(--foreground);
+  --popover: var(--elevated);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.74 0.13 255); /* #70AEFF */
+  --primary-hover: oklch(0.8 0.1 255); /* #91C1FF */
+  --primary-foreground: oklch(0.16 0.02 255);
+  --secondary: var(--elevated);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.24 0.016 250);
+  --muted-foreground: oklch(0.73 0.02 250); /* #A0AAB7 */
+  --subtle: oklch(0.6 0.02 250); /* #778391 */
+  --accent: var(--elevated);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.68 0.19 22);
+  --destructive-foreground: var(--foreground);
+  --success: oklch(0.76 0.15 155);
+  --warning: oklch(0.8 0.14 75);
+  --border: oklch(0.32 0.018 250); /* #29323D */
+  --input: oklch(0.32 0.018 250);
+  --ring: oklch(0.74 0.13 255);
+  --sidebar: var(--nav);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--elevated);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility glass {
+  background: color-mix(in oklab, var(--nav) 78%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+}

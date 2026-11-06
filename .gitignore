@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.next/
+.turbo/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.cache/
+.audit/
+.vercel/
+importer/.atlas-checkpoints/
+importer/.snapshots/

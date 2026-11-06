@@ -1,0 +1,26 @@
+{
+  "name": "@atlas/sdk",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @atlas/schemas build && tsc -p tsconfig.test.json",
+    "test": "vitest run src",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@atlas/schemas": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "latest"
+  }
+}

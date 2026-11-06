@@ -1,0 +1,21 @@
+{
+  "name": "@atlas/importer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @atlas/schemas build && pnpm --filter @atlas/arkiv build && tsc -p tsconfig.test.json",
+    "test": "vitest run src",
+    "dry-run": "node --env-file-if-exists=../.env dist/cli.js dry-run",
+    "import": "node --env-file-if-exists=../.env dist/cli.js import",
+    "verify": "node --env-file-if-exists=../.env dist/cli.js verify",
+    "doctor": "node --env-file-if-exists=../.env dist/cli.js doctor",
+    "snapshot": "node --env-file-if-exists=../.env dist/cli.js snapshot"
+  },
+  "dependencies": {
+    "@atlas/arkiv": "workspace:*",
+    "@atlas/schemas": "workspace:*",
+    "@solidity-parser/parser": "^0.20.2",
+    "viem": "^2.57.16"
+  }
+}
