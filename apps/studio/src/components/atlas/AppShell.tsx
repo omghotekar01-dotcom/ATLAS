@@ -76,8 +76,7 @@ function Navigation({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
           {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-border" />}
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item: NavItem) => {
-              const active =
-                path === item.to || path.startsWith(item.to + "/");
+              const active = path === item.to || path.startsWith(item.to + "/");
               return (
                 <li key={item.to}>
                   <Link
