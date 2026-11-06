@@ -13,7 +13,7 @@ Never force-push the checkpoint or `main`. Keep `.env`, wallet private keys, cre
 ## Current, verified product scope
 
 - ATLAS provides function/event signature lookup, decoding, transaction investigation, SDK, CLI and seven-page Studio.
-- The importer wrote **one** OpenZeppelin function signature to Arkiv Rabdi testnet (chain 7794095), and read it back successfully. That is *not* a full dataset import.
+- The importer wrote **one** OpenZeppelin function signature to Arkiv Rabdi testnet (chain 7794095), and read it back successfully. That is _not_ a full dataset import.
 - Reference function: `getRoleMember(bytes32,uint256)`, selector `0x9010d07c`.
 - Reference entity key: `0x99f6593a55a1ae91590399a059adad2cfb8faa4cf69471d7f23a053ba407a034`.
 - On-chain transaction: `0x0ddf2304bc90eacf5430c0d253cf8560f7b3dbbbf62f58f77c7b8a7347623594`.

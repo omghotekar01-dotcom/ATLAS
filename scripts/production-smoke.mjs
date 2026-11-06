@@ -78,7 +78,9 @@ for (const check of checks) {
     console.log(`PASS ${check.title}`);
   } catch (error) {
     failed += 1;
-    console.error(`FAIL ${check.title}: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error(
+      `FAIL ${check.title}: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
