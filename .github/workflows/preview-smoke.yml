@@ -1,0 +1,38 @@
+name: ATLAS Vercel preview HTTP proof
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.head_ref == 'diagnostic/atlas-vercel-preview-20261106'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe preview deployment without credentials
+        shell: bash
+        run: |
+          set -uo pipefail
+          for route in '/health' '/v1/functions/0x9010d07c' '/v1/functions/search?q=getRoleMember'; do
+            echo "::group::GET https://atlas-gaohp2fg1-omio-studio.vercel.app$route"
+            rm -f /tmp/atlas-body /tmp/atlas-headers
+            curl --silent --show-error --max-time 18 \
+              --dump-header /tmp/atlas-headers --output /tmp/atlas-body \
+              --write-out 'HTTP=%{http_code} TCP=%{time_connect}s TLS=%{time_appconnect}s TTFB=%{time_starttransfer}s total=%{time_total}s\\n' \
+              "https://atlas-gaohp2fg1-omio-studio.vercel.app$route" || true
+            head -c 1400 /tmp/atlas-headers || true
+            echo ""
+            head -c 1400 /tmp/atlas-body || true
+            echo ""
+            echo "::endgroup::"
+          done
+      - name: Assert preview health responds with real JSON (Arkiv can be degraded in preview)
+        shell: bash
+        run: |
+          set -euo pipefail
+          reply=$(curl --silent --show-error --max-time 20 'https://atlas-gaohp2fg1-omio-studio.vercel.app/health')
+          node -e 'let x=JSON.parse(process.argv[1]); if (!["ok","degraded"].includes(x.status)||typeof x.arkiv?.connected !== "boolean") process.exit(1); console.log("PASS: Vercel preview served ATLAS API JSON, state:",x.status);' "$reply"
