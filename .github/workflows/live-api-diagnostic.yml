@@ -1,4 +1,4 @@
-name: ATLAS API live post-auth diagnostic
+name: ATLAS production TLS and HTTP connectivity
 
 on:
   pull_request:
@@ -10,44 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  network-probe:
+  tls-connectivity:
     if: github.head_ref == 'diagnostic/atlas-api-live-20261106'
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 3
     steps:
-      - name: Probe production and exact deployment (read-only)
+      - name: Determine exactly where HTTPS stalls (read-only)
         shell: bash
         run: |
           set -uo pipefail
-          hosts=(
-            "https://atlas-api-ivory.vercel.app"
-            "https://atlas-3j92u0jnv-omio-studio.vercel.app"
-          )
-          paths=(
-            "/health"
-            "/v1/functions/0x9010d07c"
-            "/v1/functions/search?q=getRoleMember"
-          )
-          for host in "${hosts[@]}"; do
-            for path in "${paths[@]}"; do
-              echo "::group::GET ${host}${path}"
-              rm -f /tmp/atlas-response /tmp/atlas-headers
-              curl --silent --show-error --max-time 12 \
-                --output /tmp/atlas-response --dump-header /tmp/atlas-headers \
-                --write-out 'HTTP=%{http_code} IP=%{remote_ip} dns=%{time_namelookup}s connect=%{time_connect}s first_byte=%{time_starttransfer}s total=%{time_total}s\\n' \
-                "${host}${path}" || true
-              echo "HEADERS:"
-              if test -f /tmp/atlas-headers; then head -c 1700 /tmp/atlas-headers; fi
-              echo ""
-              echo "BODY:"
-              if test -f /tmp/atlas-response; then head -c 1600 /tmp/atlas-response; fi
-              echo ""
-              echo "::endgroup::"
-            done
+          for host in example.com vercel.com atlas-api-ivory.vercel.app atlas-3j92u0jnv-omio-studio.vercel.app; do
+            echo "::group::TLS $host"
+            timeout 7 openssl s_client -connect "$host:443" -servername "$host" -brief </dev/null 2>&1 | head -n 18 || true
+            echo "::endgroup::"
+            echo "::group::GET $host"
+            curl --ipv4 --verbose --max-time 8 --connect-timeout 5 -o /tmp/atlas-body \
+              -w 'RESULT http=%{http_code} remote_ip=%{remote_ip} tcp=%{time_connect}s TLS=%{time_appconnect}s TTFB=%{time_starttransfer}s total=%{time_total}s\\n' \
+              "https://$host/health" 2>&1 | tail -n 38 || true
+            echo "::endgroup::"
           done
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-      - name: Verify canonical real Arkiv data on production
-        run: node scripts/production-smoke.mjs https://atlas-api-ivory.vercel.app
