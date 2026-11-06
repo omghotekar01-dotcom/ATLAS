@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown, Fingerprint, ShieldCheck, ShieldX, Copy, ExternalLink } from "lucide-react";
 import type { EnsV2RoleResult } from "@atlas/schemas";
 import type { FunctionCandidate } from "@/api/types";
 import { atlasClient, type EnsV2RoleQuery } from "@/api/atlasClient";
@@ -54,9 +55,7 @@ export function PublisherEvidence({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
-  const [evidence, setEvidence] = useState<ReturnType<typeof makePublisherEvidence> | null>(
-    null,
-  );
+  const [evidence, setEvidence] = useState<ReturnType<typeof makePublisherEvidence> | null>(null);
 
   const normalizedAccount = account.trim();
   const normalizedName = name.trim();
@@ -116,28 +115,60 @@ export function PublisherEvidence({
     : "";
 
   return (
-    <section className="mt-4 border-t border-border pt-4">
+    <section className="mt-5 overflow-hidden rounded-2xl border border-border bg-card/60 shadow-sm">
       <button
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((value) => !value)}
-        className="text-sm font-medium text-primary hover:underline"
+        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors hover:bg-secondary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
       >
-        {expanded ? "Hide ENSv2 publisher permission evidence" : "Check ENSv2 publisher permission"}
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+            <Fingerprint className="size-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-foreground">
+              ENSv2 · Publisher permission
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              Live registry check · Provenance evidence
+            </span>
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="hidden rounded-full border border-border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:inline-flex">
+            Read-only
+          </span>
+          <ChevronDown aria-hidden="true" className={expanded ? "size-4 rotate-180" : "size-4"} />
+        </span>
       </button>
       {expanded && (
-        <div className="mt-3 space-y-3 rounded-lg border border-border bg-card p-3">
-          <p className="text-xs text-muted-foreground">
-            Compare this Arkiv signature record with a live ENSv2 registry permission.
-            These are independent evidence sources, NOT proof that the ENS account owns,
-            signed, or published this ABI.
+        <div className="space-y-4 border-t border-border bg-background/30 p-4 sm:p-5">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-border/70 bg-card p-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                01 / Arkiv source
+              </p>
+              <p className="mt-2 break-all font-mono text-xs">{candidate.signature}</p>
+            </div>
+            <div className="rounded-xl border border-border/70 bg-card p-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                02 / ENSv2 authority
+              </p>
+              <p className="mt-2 text-xs">Sepolia · Permissioned Registry</p>
+            </div>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Compare this Arkiv signature record with a live ENSv2 registry permission. These are
+            independent evidence sources, NOT proof that the ENS account owns, signed, or published
+            this ABI.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <button
               type="button"
               disabled={loading}
               onClick={() => runExample(EXAMPLE_AUTHORIZED)}
-              className="rounded-lg border border-border px-3 py-2 text-xs hover:bg-secondary disabled:opacity-50"
+              className="min-h-10 rounded-xl border border-border bg-card px-3 py-2 text-left text-xs font-medium transition-colors hover:bg-secondary disabled:opacity-50"
             >
               Live authorized root-role example
             </button>
@@ -145,7 +176,7 @@ export function PublisherEvidence({
               type="button"
               disabled={loading}
               onClick={() => runExample(EXAMPLE_DENIED)}
-              className="rounded-lg border border-border px-3 py-2 text-xs hover:bg-secondary disabled:opacity-50"
+              className="min-h-10 rounded-xl border border-border bg-card px-3 py-2 text-left text-xs font-medium transition-colors hover:bg-secondary disabled:opacity-50"
             >
               Live denied root-role example
             </button>
@@ -221,14 +252,23 @@ export function PublisherEvidence({
             </p>
           )}
           {proof && evidence && (
-            <div className="space-y-2 rounded-lg border border-border p-3 text-xs">
-              <p role="status" className="font-semibold">
-                ENSv2 role: {proof.authorized ? "AUTHORIZED" : "DENIED"} · Sepolia block{" "}
-                {proof.blockNumber}
-              </p>
-              <p className="break-all text-muted-foreground">
-                Registry: {proof.registry}
-              </p>
+            <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  {proof.authorized ? (
+                    <ShieldCheck className="size-5 text-emerald-500" />
+                  ) : (
+                    <ShieldX className="size-5 text-amber-500" />
+                  )}
+                  <span role="status" className="text-sm font-semibold">
+                    ENSv2 role: {proof.authorized ? "AUTHORIZED" : "DENIED"}
+                  </span>
+                </span>
+                <span className="rounded-full border border-border px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
+                  Block {proof.blockNumber}
+                </span>
+              </div>
+              <p className="break-all text-muted-foreground">Registry: {proof.registry}</p>
               <p className="break-all text-muted-foreground">
                 Resource: {proof.resource} · Required role: {proof.requiredRoles}
               </p>
@@ -237,11 +277,18 @@ export function PublisherEvidence({
                   Name: {proof.publisher.name} · Registry owner: {proof.publisher.owner}
                 </p>
               )}
-              <p className="font-medium text-warning">
-                Source-to-publisher binding: NOT VERIFIED
-              </p>
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+                <p className="font-semibold text-amber-500">
+                  Source-to-publisher binding: NOT VERIFIED
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Registry permissions do not prove ABI authorship or publication.
+                </p>
+              </div>
               {proof.warnings.map((warning, index) => (
-                <p key={index} className="text-muted-foreground">{warning}</p>
+                <p key={index} className="text-muted-foreground">
+                  {warning}
+                </p>
               ))}
               <a
                 href={explorerUrl}
@@ -249,6 +296,7 @@ export function PublisherEvidence({
                 rel="noreferrer"
                 className="inline-block text-primary underline"
               >
+                <ExternalLink className="mr-1 inline size-3" aria-hidden="true" />
                 Inspect registry on Etherscan
               </a>
               <div>
@@ -257,9 +305,14 @@ export function PublisherEvidence({
                   onClick={() => void copyEvidence()}
                   className="rounded-lg border border-border px-3 py-2 hover:bg-secondary"
                 >
+                  <Copy className="mr-1 inline size-3" aria-hidden="true" />
                   Copy combined source + ENSv2 evidence
                 </button>
-                {copied && <span role="status" className="ml-2">{copied}</span>}
+                {copied && (
+                  <span role="status" className="ml-2">
+                    {copied}
+                  </span>
+                )}
               </div>
               <details>
                 <summary className="cursor-pointer">Inspect raw evidence JSON</summary>
