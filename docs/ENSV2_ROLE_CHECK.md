@@ -45,3 +45,5 @@ The result is a JSON object containing `authorized`, `roleBitmap`, `blockNumber`
 The API defaults to Sepolia. Set `ATLAS_ENSV2_CHAIN_ID=1` and `ATLAS_RPC_URL_1` to target Ethereum Mainnet. Verify `ATLAS_ENSV2_REGISTRY` against the [official deployment table](https://docs.ens.domains/learn/deployments/).
 
 To check an active registration against the official ENSv2 registry, use `atlas publisher <account> --name <name.eth> --json`. The named response contains the registered owner, resolver, current EAC resource and role at one block. ATLAS follows up to two explicit subregistries and does not query wildcard or offchain record data.
+
+A read-only Sepolia probe at block `12078581` returned `authorized=false` and bitmap `0` for `0x000000000000000000000000000000000000dead`, root resource `0`, against [the official Sepolia ETHRegistry](https://sepolia.etherscan.io/address/0xd4ebcbbdf463c9c45784603db0ddd499bc44a8b4). The Mainnet probe did not complete. A separate authorized name-scoped example remains pending.

@@ -69,7 +69,9 @@ export function PageHeader({
 
 export function Panel({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <section className={cn("rounded-2xl border border-border bg-card p-5 md:p-6", className)}>
+    <section
+      className={cn("min-w-0 rounded-2xl border border-border bg-card p-5 md:p-6", className)}
+    >
       {children}
     </section>
   );

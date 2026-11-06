@@ -179,8 +179,8 @@ function Docs() {
         title="Developer Hub"
         description="Concepts, contracts and tooling for building on ATLAS."
       />
-      <div className="grid gap-8 md:grid-cols-[200px_1fr]">
-        <nav aria-label="Docs" className="md:sticky md:top-24 md:self-start">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 md:grid-cols-[200px_minmax(0,1fr)]">
+        <nav aria-label="Docs" className="min-w-0 md:sticky md:top-24 md:self-start">
           <ul className="flex gap-1 overflow-x-auto md:flex-col">
             {SECTIONS.map((s) => (
               <li key={s.id}>
