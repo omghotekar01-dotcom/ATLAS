@@ -16,4 +16,3 @@ export {
 } from "./deps.js";
 export { investigateTransaction } from "./transaction.js";
 export { withTimeout } from "./timeout.js";
-export { createVercelHandler, type VercelHandler } from "./vercel.js";

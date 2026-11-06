@@ -1,6 +1,5 @@
 import type { Address, Hex } from "viem";
 import type { FastifyInstance } from "fastify";
-import { createServer } from "node:http";
 import type { PublicArkivClient } from "@arkiv-network/sdk";
 import { afterEach, describe, expect, it } from "vitest";
 import { encodeFunctionData, parseAbi, stringToHex, toEventSelector } from "viem";
@@ -14,7 +13,6 @@ import {
 
 import { createApp } from "./app.js";
 import { createDefaultDependencies } from "./deps.js";
-import { createVercelHandler } from "./vercel.js";
 import { makeDependencies } from "./test-support.js";
 
 const creator = "0x0000000000000000000000000000000000000001" as Address;
@@ -311,31 +309,6 @@ describe("HTTP API over the real Arkiv repository adapter", () => {
     expect(limited.status).toBe(429);
     expect(limited.headers.get("retry-after")).toBeTruthy();
     expect(ApiErrorSchema.parse(await limited.json()).error.code).toBe("RATE_LIMITED");
-  });
-
-  it("serves the same app through the Vercel Node handler", async () => {
-    const handler = createVercelHandler({
-      dependencies: makeDependencies(),
-      rateLimitPerMinute: 0,
-      upstreamTimeoutMs: 500,
-    });
-    const server = createServer((request, response) => {
-      void handler(request, response);
-    });
-    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-    const address = server.address();
-    if (!address || typeof address === "string") throw new Error("No listener address.");
-    const base = `http://127.0.0.1:${address.port}`;
-
-    try {
-      const health = await fetch(`${base}/health`);
-      expect(health.status).toBe(200);
-      expect(await health.json()).toMatchObject({ status: "ok", version: "test" });
-    } finally {
-      await new Promise<void>((resolve, reject) =>
-        server.close((error) => (error ? reject(error) : resolve())),
-      );
-    }
   });
 
   it("reports degraded health when the health probe hangs", async () => {

@@ -132,20 +132,10 @@ pass `--env-file-if-exists=../../.env`); a missing file is not an error. Copy
 `.env.example` to start one. Nothing is read at import time, so the Vercel
 handler still takes its configuration from the platform environment.
 
-## Vercel compatibility
+## Vercel
 
-`createVercelHandler()` in `services/api/src/vercel.ts` adapts the same Fastify
-app to the Vercel Node runtime without calling `listen()`:
-
-```ts
-// api/index.ts in the deployed project
-import { createVercelHandler } from "../services/api/dist/index.js";
-
-export default createVercelHandler();
-```
-
-Build the workspace before deploying so `services/api/dist` exists. The handler
-creates and `ready()`s one Fastify instance per warm lambda and reuses it. It
-does not read credentials at import time. Local development and tests still use
-`server.ts` / `app.listen()`. A platform timeout should be at least as large as
-`ATLAS_UPSTREAM_TIMEOUT_MS` plus overhead.
+Vercel's Fastify framework preset detects `services/api/src/server.ts` and
+serves the Fastify application directly as a single function. API paths,
+including `/health` and `/v1/*`, are handled without a routing prefix or
+rewrite. Keep the API project's output directory unset and do not add a
+separate `api/` function.

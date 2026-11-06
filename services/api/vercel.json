@@ -3,12 +3,8 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter '@atlas/api...' run build",
   "functions": {
-    "api/[...path].ts": {
+    "src/server.ts": {
       "maxDuration": 30
     }
-  },
-  "rewrites": [
-    { "source": "/health", "destination": "/api/health" },
-    { "source": "/v1/:path*", "destination": "/api/v1/:path*" }
-  ]
+  }
 }

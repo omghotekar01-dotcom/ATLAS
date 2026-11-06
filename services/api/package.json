@@ -13,8 +13,8 @@
   "scripts": {
     "dev": "tsx --env-file-if-exists=../../.env src/server.ts",
     "start": "node --env-file-if-exists=../../.env dist/server.js",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig.vercel.json",
-    "typecheck": "pnpm --filter @atlas/schemas build && pnpm --filter @atlas/core build && pnpm --filter @atlas/chain build && pnpm --filter @atlas/arkiv build && tsc -p tsconfig.test.json && tsc -p tsconfig.vercel.json",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @atlas/schemas build && pnpm --filter @atlas/core build && pnpm --filter @atlas/chain build && pnpm --filter @atlas/arkiv build && tsc -p tsconfig.test.json",
     "test": "vitest run src",
     "clean": "rimraf dist"
   },

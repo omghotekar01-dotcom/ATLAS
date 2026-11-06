@@ -17,19 +17,15 @@ Vercel project or deployment was created.
 
 ## Runtime and routing
 
-The local `services/api/src/server.ts` starts a long-lived listener and is not
-the Vercel entry point. Production uses `services/api/api/index.ts`, which
-exports the Fastify-to-Node handler from `src/vercel.ts`. The handler creates
-the app once per warm function, waits for Fastify readiness, does not bind a
-port, normalizes the Vercel `/api/...` route prefix, and waits for the response
-to finish.
+Vercel's Fastify framework preset detects `services/api/src/server.ts` and
+serves the Fastify application as one function. The API has no path rewrites or
+separate `api/` catch-all function, so `/health` and `/v1/*` reach Fastify with
+their original request paths. The Studio's Vite output rewrites unknown paths
+to `index.html` so each of the seven client routes can be opened or refreshed
+directly.
 
-The API Vercel rewrite maps `/health` and `/v1/*` into one catch-all Node
-Function. The Studio's Vite output rewrites unknown paths to `index.html` so
-each of the seven client routes can be opened or refreshed directly.
-
-The API function is configured for a 30-second maximum duration, above the
-default upstream timeout of 8 seconds. Set both Vercel projects to Node.js
+The API Fastify function is configured for a 30-second maximum duration, above
+the default upstream timeout of 8 seconds. Set both Vercel projects to Node.js
 24.x; the repository pins Node 24 locally and its engine range excludes 25+.
 The deployment guide contains the exact Root Directory, install/build command,
 and project settings.

@@ -48,23 +48,22 @@ value in Preview only if that Preview API is intentionally reachable.
 | Setting           | Value                                     |
 | ----------------- | ----------------------------------------- |
 | Root Directory    | `services/api`                            |
-| Framework Preset  | Other                                     |
+| Framework Preset  | Fastify                                   |
 | Build Command     | `pnpm --filter '@atlas/api...' run build` |
 | Output Directory  | Leave unset                               |
 | Install Command   | `pnpm install --frozen-lockfile`          |
 | Node.js           | `24.x`                                    |
 | Function duration | `30` seconds maximum                      |
 
-[`services/api/api/[...path].ts`](../services/api/api/[...path].ts) is the function
-entry point. It exports the Fastify adapter from source, which is covered by
-`services/api/tsconfig.vercel.json`; do not use
-`services/api/src/server.ts` as a Vercel function because that file calls
-`listen()` and installs process signal handlers for a long-running server.
-The serverless handler does not listen on a port. The entry is named
-`api/[...path].ts` so it matches the configured Vercel catch-all function.
-Rewrites map `/health` and `/v1/*` to `/api/...`; the adapter removes only the
-`/api` routing prefix and retains the original path and query string for
-Fastify. Vercel passes query parameters through these rewrites.
+Vercel's native Fastify support detects
+[`services/api/src/server.ts`](../services/api/src/server.ts) and serves the
+Fastify application as one function. It routes requests directly to Fastify,
+so `/health`, `/v1/functions/:selector`, `/v1/functions/search`, and all other
+registered API routes keep their original paths and query strings.
+[`services/api/vercel.json`](../services/api/vercel.json) sets the 30-second
+maximum duration on `src/server.ts`. Do not add API rewrites, an `api/`
+catch-all function, or an output directory: these would compete with the
+framework's application routing.
 
 Set these **Production** environment variable names in the API project only:
 
