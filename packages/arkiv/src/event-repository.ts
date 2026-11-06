@@ -1,10 +1,11 @@
-import type { PublicArkivClient } from "@arkiv-network/sdk";
+import { ExpirationTime, type PublicArkivClient, type WalletArkivClient } from "@arkiv-network/sdk";
 import { asc, eq, gt } from "@arkiv-network/sdk/query";
 import { key } from "@arkiv-network/sdk/schema";
 import {
   canonicalJson,
   EventSignatureSchema,
   type EventSignature,
+  type Hash,
   type Topic0,
 } from "@atlas/schemas";
 import { hexToString, stringToBytes, type Address, type Hex } from "viem";
@@ -80,9 +81,22 @@ export class ArkivEventRepository {
   constructor(
     private readonly publicClient: PublicArkivClient,
     private readonly trustedCreator: Address,
+    private readonly walletClient?: WalletArkivClient,
   ) {}
 
   async findByTopic0(topic0: Topic0): Promise<StoredEventSignature[]> {
+    return this.findByIndexedField("topic0", topic0);
+  }
+
+  /** Deterministic content-hash lookup for idempotent writes and read-back. */
+  async findByRecordHash(recordHash: Hash): Promise<StoredEventSignature[]> {
+    return this.findByIndexedField("recordHash", recordHash);
+  }
+
+  private async findByIndexedField(
+    field: "topic0" | "recordHash",
+    value: string,
+  ): Promise<StoredEventSignature[]> {
     const records = new Map<string, StoredEventSignature>();
     let lastKey: Hex | undefined;
 
@@ -102,7 +116,7 @@ export class ArkivEventRepository {
         })
         .from(EventSignatures, { onMismatch: "throw" })
         .createdBy(this.trustedCreator)
-        .where(eq("topic0", topic0))
+        .where(eq(field, value))
         .orderBy(asc("$key"))
         .limit(PAGE_SIZE);
 
@@ -135,6 +149,36 @@ export class ArkivEventRepository {
     return [...records.values()].sort((left, right) =>
       left.recordHash.localeCompare(right.recordHash),
     );
+  }
+
+  /** Public Rabdi write, only for explicitly approved offline importer runs. */
+  async put(recordInput: EventSignature): Promise<{ entityKey: Hex; txHash: Hex }> {
+    if (!this.walletClient) {
+      throw new Error("A wallet client is required to write Arkiv event records.");
+    }
+
+    const signer = this.walletClient.account;
+    if (!signer || signer.address.toLowerCase() !== this.trustedCreator.toLowerCase()) {
+      throw new Error("The event-write wallet must match the configured trusted creator.");
+    }
+
+    const record = EventSignatureSchema.parse(recordInput);
+    const { entityKey, txHash } = await this.walletClient.createEntity(
+      EventSignatures,
+      {
+        topic0: record.topic0,
+        signature: stringToBytes(record.signature),
+        ...(record.indexed ? { indexed: encodeIndexedLayout(record.indexed) } : {}),
+        source: record.source,
+        sourceId: record.sourceId,
+        importedAt: record.importedAt,
+        datasetVersion: record.datasetVersion,
+        recordHash: record.recordHash,
+      },
+      { expiration: ExpirationTime.fromDays(180) },
+    );
+
+    return { entityKey, txHash };
   }
 }
 
