@@ -230,6 +230,7 @@ function Explorer() {
                 c={candidate}
                 selector={selector}
                 index={index}
+                allowPublisherEvidence={!result.sample}
               />
             ))}
           </>
