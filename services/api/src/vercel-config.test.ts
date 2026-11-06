@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "./app-factory.js";
@@ -62,6 +63,7 @@ describe("Vercel Fastify configuration", () => {
 
     expect(recognizedEntries).toEqual(["src/server.ts"]);
     expect(filesUnder(apiFunctionsRoot)).toEqual([]);
+    expect(serverEntry).toMatch(/import\s+Fastify\s+from\s+["']fastify["']/);
     expect(serverEntry).toContain('import { createApp } from "./app-factory.js"');
     expect(serverEntry).toContain("await app.listen");
   });
@@ -87,6 +89,7 @@ describe("Vercel Fastify configuration", () => {
 
   it("serves direct health, lookup and search paths without a routing prefix", async () => {
     const app = createApp({
+      fastifyFactory: Fastify,
       dependencies: makeDependencies({
         functions: memoryFunctions([
           functionRecord("transfer(address,uint256)", "0x9010d07c", "a"),
@@ -119,6 +122,10 @@ describe("Vercel Fastify configuration", () => {
       expect(search.json()).toMatchObject({
         items: [{ signature: "transfer(address,uint256)" }],
       });
+
+      const invalid = await app.inject({ method: "GET", url: "/v1/functions/nope" });
+      expect(invalid.statusCode).toBe(400);
+      expect(invalid.json()).toMatchObject({ error: { code: "INVALID_SELECTOR" } });
     } finally {
       await app.close();
     }

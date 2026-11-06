@@ -40,6 +40,7 @@ import { withTimeout } from "./timeout.js";
 
 export interface CreateAppOptions {
   readonly dependencies?: ApiDependencies;
+  readonly fastifyFactory?: typeof Fastify;
   readonly logger?: boolean;
   readonly rateLimitPerMinute?: number;
   readonly upstreamTimeoutMs?: number;
@@ -79,7 +80,7 @@ export function createApp(options: CreateAppOptions = {}): FastifyInstance {
   const upstreamTimeoutMs =
     options.upstreamTimeoutMs ?? readPositiveInteger(process.env.ATLAS_UPSTREAM_TIMEOUT_MS, 8_000);
 
-  const app = Fastify({
+  const app = (options.fastifyFactory ?? Fastify)({
     logger: options.logger ?? false,
     genReqId: (request) => {
       const header = request.headers["x-request-id"];

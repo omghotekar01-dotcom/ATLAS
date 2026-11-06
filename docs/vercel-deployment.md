@@ -60,6 +60,11 @@ Vercel's native Fastify support detects
 Fastify application as one function. It routes requests directly to Fastify,
 so `/health`, `/v1/functions/:selector`, `/v1/functions/search`, and all other
 registered API routes keep their original paths and query strings. The
+detected entry file must directly import the runtime `Fastify` constructor
+from `fastify` and use it to create the app; an indirect import through a
+factory module is not sufficient for Vercel's entry-point detector. ATLAS
+passes that constructor into `createApp` as `fastifyFactory`, preserving the
+same route registrations and behavior. The
 [`services/api/vercel.json`](../services/api/vercel.json) explicitly selects
 the Fastify framework and contains no `functions`, `rewrites`, or
 `outputDirectory` setting. Do not add an `api/` catch-all function or API
