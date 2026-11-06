@@ -116,7 +116,9 @@ export async function importEvents(args: readonly string[]): Promise<number> {
     },
   });
 
-  const selected = events.slice().sort((a, b) => a.recordHash.localeCompare(b.recordHash))
+  const selected = events
+    .slice()
+    .sort((a, b) => a.recordHash.localeCompare(b.recordHash))
     .slice(0, Math.min(events.length, limit));
   const verification = await verifyEventRecords(selected, repository);
 

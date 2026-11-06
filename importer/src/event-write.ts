@@ -30,7 +30,8 @@ export async function writeEventRecordsInBatches(
 ): Promise<BatchedWriteResult> {
   const batchSize = assertBatchSize(options.batchSize ?? DEFAULT_BATCH_SIZE);
   const ordered = [...records].sort((a, b) => a.recordHash.localeCompare(b.recordHash));
-  const selected = options.maxRecords === undefined ? ordered : ordered.slice(0, options.maxRecords);
+  const selected =
+    options.maxRecords === undefined ? ordered : ordered.slice(0, options.maxRecords);
   const written: BatchedWriteResult["written"] = [];
   const failures: BatchedWriteResult["failures"][number][] = [];
   let skipped = 0;

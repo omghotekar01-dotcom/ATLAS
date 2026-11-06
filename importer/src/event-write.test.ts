@@ -69,9 +69,7 @@ describe("approved event-write pipeline", () => {
 
   it("detects missing or modified on-chain event payloads", async () => {
     const repository = {
-      findByRecordHash: async () => [
-        { ...event, indexed: [false, false, false] },
-      ],
+      findByRecordHash: async () => [{ ...event, indexed: [false, false, false] }],
     };
     const result = await verifyEventRecords([event], repository);
     expect(result.verified).toBe(0);
