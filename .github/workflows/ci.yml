@@ -84,7 +84,7 @@ jobs:
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'fix/vercel-http-server-export-20261106'
+      github.event.pull_request.head.ref == 'feat/arkiv-event-import-20261106'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -96,9 +96,9 @@ jobs:
 
       - name: Create reviewed commit with verified attribution
         env:
-          BASE_SHA: 31b4bdfbf276c8c074180c8a5ffa8f8d01bf64f3
+          BASE_SHA: 3212adc8496d5d67c065a77fbf49766ba5a61d01
           SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-          RELEASE_BRANCH: release/atlas-vercel-server-${{ github.run_id }}
+          RELEASE_BRANCH: release/atlas-event-import-authored-${{ github.run_id }}
         run: |
           set -euo pipefail
           git fetch --no-tags origin main
@@ -106,12 +106,12 @@ jobs:
           git fetch --no-tags origin "$SOURCE_SHA"
           git switch --detach "$BASE_SHA"
           git switch -c "$RELEASE_BRANCH"
-          git restore --source="$SOURCE_SHA" -- .github/workflows/ci.yml services/api/src/server.ts services/api/src/server.vercel.test.ts services/api/src/vercel-config.test.ts docs/vercel-deployment.md
-          git add -- .github/workflows/ci.yml services/api/src/server.ts services/api/src/server.vercel.test.ts services/api/src/vercel-config.test.ts docs/vercel-deployment.md
+          git restore --source="$SOURCE_SHA" -- packages/arkiv/src/event-repository.ts packages/arkiv/src/event-repository.test.ts importer/src/event-import.ts importer/src/event-write.ts importer/src/event-write.test.ts importer/package.json importer/src/index.ts importer/README.md
+          git add -- packages/arkiv/src/event-repository.ts packages/arkiv/src/event-repository.test.ts importer/src/event-import.ts importer/src/event-write.ts importer/src/event-write.test.ts importer/package.json importer/src/index.ts importer/README.md
           git diff --cached --check
           git config user.name "Om Ghotekar"
           git config user.email "omghotekar01@gmail.com"
-          git commit -m "Export Fastify Node HTTP server for Vercel runtime"
+          git commit -m "Add Arkiv event signature importer with separate approval gate"
           test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
           echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
