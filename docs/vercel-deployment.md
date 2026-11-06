@@ -133,3 +133,22 @@ errors. Then load and refresh each Studio route directly, test the exact CORS
 origin and an unlisted origin, and inspect the browser network panel for the
 API URL. The live record proof and transaction details are in
 [`arkiv-live-proof.md`](./arkiv-live-proof.md).
+
+## Vercel Node server entry contract (2026-11-06)
+
+The Vercel native Fastify adapter must load a **Node.js HTTP Server**, not a factory.
+`services/api/src/server.ts` directly imports Fastify for framework discovery,
+creates the application through `createApp`, awaits `app.ready()`, and
+**exports `app.server` as the module default**. The real TCP `app.listen()`
+call occurs **only outside** Vercel (`!process.env.VERCEL`). Never deploy a
+Fastify factory without a compatible HTTP-server default export, and never
+invoke a second listener in Vercel's managed runtime.
+
+The tests `server.vercel.test.ts` and `vercel-config.test.ts` guard the
+HTTP-server export, startup lifecycle, liveness response and routed lookup.
+They do not establish that production Arkiv is reachable; that requires
+separate HTTP 200 checks and a matching real entity from the deployed URL.
+
+This fix was motivated by repeated production `500 INTERNAL_FUNCTION_INVOCATION_FAILED`
+responses despite Vercel marking the build READY. A successful build is not
+an acceptable substitute for real deployment verification.
