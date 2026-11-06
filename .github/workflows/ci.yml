@@ -65,7 +65,7 @@ jobs:
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'fix/vercel-api-production-recovery-20261106'
+      github.event.pull_request.head.ref == 'fix/vercel-http-server-export-20261106'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -77,9 +77,9 @@ jobs:
 
       - name: Create reviewed commit with verified attribution
         env:
-          BASE_SHA: 9ebb74cdd9bca9c69a57d047e777f06d3a2d1ae7
+          BASE_SHA: 31b4bdfbf276c8c074180c8a5ffa8f8d01bf64f3
           SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-          RELEASE_BRANCH: release/chatgpt-recovery-${{ github.run_id }}
+          RELEASE_BRANCH: release/atlas-vercel-server-${{ github.run_id }}
         run: |
           set -euo pipefail
           git fetch --no-tags origin main
@@ -87,12 +87,12 @@ jobs:
           git fetch --no-tags origin "$SOURCE_SHA"
           git switch --detach "$BASE_SHA"
           git switch -c "$RELEASE_BRANCH"
-          git restore --source="$SOURCE_SHA" -- .github/workflows/ci.yml docs/CHATGPT_HANDOFF.md scripts/production-smoke.mjs
-          git add -- .github/workflows/ci.yml docs/CHATGPT_HANDOFF.md scripts/production-smoke.mjs
+          git restore --source="$SOURCE_SHA" -- .github/workflows/ci.yml services/api/src/server.ts services/api/src/server.vercel.test.ts services/api/src/vercel-config.test.ts docs/vercel-deployment.md
+          git add -- .github/workflows/ci.yml services/api/src/server.ts services/api/src/server.vercel.test.ts services/api/src/vercel-config.test.ts docs/vercel-deployment.md
           git diff --cached --check
           git config user.name "Om Ghotekar"
           git config user.email "omghotekar01@gmail.com"
-          git commit -m "Add cloud CI, production checks and recovery handoff"
+          git commit -m "Export Fastify Node HTTP server for Vercel runtime"
           test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
           echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
