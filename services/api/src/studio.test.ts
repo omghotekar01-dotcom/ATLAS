@@ -10,7 +10,7 @@ it("serves Studio pages and assets alongside JSON API routes", async () => {
     "assets/index-abc.js": Buffer.from("export {};").toString("base64"),
   });
   try {
-    for (const url of ["/", "/developers", "/explorer", "/settings/"]) {
+    for (const url of ["/", "/studio", "/studio/", "/developers", "/explorer", "/settings/"]) {
       const page = await app.inject({ url });
       expect(page.statusCode, url).toBe(200);
       expect(page.headers["content-type"]).toMatch(/^text\/html/);

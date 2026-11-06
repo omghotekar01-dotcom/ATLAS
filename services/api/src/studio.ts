@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 
 const pages = [
   "/",
+  "/studio",
   "/explorer",
   "/decode",
   "/events",
