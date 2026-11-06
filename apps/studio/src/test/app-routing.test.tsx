@@ -10,6 +10,7 @@ import { NAV } from "@/lib/atlas/nav";
 const ROUTES = [
   "/",
   "/studio",
+  "/demo",
   "/explorer",
   "/decode",
   "/events",
@@ -42,19 +43,5 @@ describe("App routing", () => {
     expect(match("/").at(-1)?.routeId).not.toBe(rootRouteId);
   });
 
-  it("matches public landing and all ten Studio routes", () => {
-    const destinations = NAV.map((entry) => entry.to);
-    expect(new Set(destinations).size).toBe(destinations.length);
-    for (const path of ROUTES) {
-      if (path !== "/") expect(destinations).toContain(path);
-    }
-    for (const path of ROUTES) {
-      const matches = match(path);
-      expect(matches.at(-1)?.routeId, path).toBe(path === "/" ? "/" : path);
-      expect(
-        matches.some((entry) => entry.routeId === rootRouteId),
-        path,
-      ).toBe(true);
-    }
-  });
-});
+  it("matches public landing, guided demo, and all ten Studio routes", () => {
+    const destinations = NAV.map((entry) => entry.¶»§q«^

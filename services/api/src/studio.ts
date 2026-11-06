@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 const pages = [
   "/",
   "/studio",
+  "/demo",
   "/explorer",
   "/decode",
   "/events",
@@ -49,12 +50,4 @@ export function registerStudio(app: FastifyInstance, assets = loadStudio()): voi
 
   for (const [file, bytes] of Object.entries(assets)) {
     if (!file.startsWith("assets/")) continue;
-    const body = Buffer.from(bytes, "base64");
-    app.get(`/${file}`, async (_request, reply) =>
-      reply
-        .type(contentTypes[extname(file)] ?? "application/octet-stream")
-        .header("cache-control", "public, max-age=31536000, immutable")
-        .send(body),
-    );
-  }
-}
+    const body = Buffer.from(bytes, "¶»§q«^
