@@ -76,8 +76,7 @@ function Navigation({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
           {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-border" />}
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item: NavItem) => {
-              const active =
-                item.to === "/" ? path === "/" : path === item.to || path.startsWith(item.to + "/");
+              const active = path === item.to || path.startsWith(item.to + "/");
               return (
                 <li key={item.to}>
                   <Link
@@ -173,6 +172,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     degraded: "API degraded",
     unavailable: "API unavailable",
   };
+  // Public landing uses a dedicated full-width layout.
+  if (path === "/") return <>{children}</>;
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <a
@@ -190,7 +192,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className={cn("flex h-14 items-center", collapsed ? "justify-center" : "px-4")}>
           <Link
-            to="/"
+            to="/studio"
             className="flex items-center gap-2.5"
             aria-label="ATLAS Developer Studio home"
           >

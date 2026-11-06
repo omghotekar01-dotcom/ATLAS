@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 export type NavPath =
-  | "/"
+  | "/studio"
   | "/explorer"
   | "/decode"
   | "/events"
@@ -33,7 +33,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Workspace",
     items: [
-      { to: "/", label: "Overview", icon: LayoutGrid, hint: "Workspace and shortcuts" },
+      { to: "/studio", label: "Overview", icon: LayoutGrid, hint: "Workspace and shortcuts" },
       {
         to: "/explorer",
         label: "Signature Explorer",

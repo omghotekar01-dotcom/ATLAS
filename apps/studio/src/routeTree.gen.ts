@@ -18,6 +18,7 @@ import { Route as ExplorerRouteImport } from './routes/explorer'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatusRouteImport } from './routes/status'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +66,11 @@ const StatusRoute = StatusRouteImport.update({
   path: '/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof IntegrationsRoute
   '/settings': typeof SettingsRoute
   '/status': typeof StatusRoute
+  '/studio': typeof StudioRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/integrations': typeof IntegrationsRoute
   '/settings': typeof SettingsRoute
   '/status': typeof StatusRoute
+  '/studio': typeof StudioRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/integrations': typeof IntegrationsRoute
   '/settings': typeof SettingsRoute
   '/status': typeof StatusRoute
+  '/studio': typeof StudioRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/settings'
     | '/status'
+    | '/studio'
     | '/transactions'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/settings'
     | '/status'
+    | '/studio'
     | '/transactions'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/settings'
     | '/status'
+    | '/studio'
     | '/transactions'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   IntegrationsRoute: typeof IntegrationsRoute
   SettingsRoute: typeof SettingsRoute
   StatusRoute: typeof StatusRoute
+  StudioRoute: typeof StudioRoute
   TransactionsRoute: typeof TransactionsRoute
 }
 
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transactions': {
       id: '/transactions'
       path: '/transactions'
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntegrationsRoute: IntegrationsRoute,
   SettingsRoute: SettingsRoute,
   StatusRoute: StatusRoute,
+  StudioRoute: StudioRoute,
   TransactionsRoute: TransactionsRoute,
 }
 export const routeTree = rootRouteImport
