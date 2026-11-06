@@ -66,6 +66,9 @@ describe("Vercel Fastify configuration", () => {
     expect(serverEntry).toMatch(/import\s+Fastify\s+from\s+["']fastify["']/);
     expect(serverEntry).toContain('import { createApp } from "./app-factory.js"');
     expect(serverEntry).toContain("await app.listen");
+    expect(serverEntry).toContain("await app.ready()");
+    expect(serverEntry).toContain("export default app.server");
+    expect(serverEntry).toMatch(/if\s*\(!process\.env\.VERCEL\)/);
   });
 
   it("uses native Fastify routing without API functions, rewrites, or output directory", () => {
