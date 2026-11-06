@@ -21,6 +21,8 @@ import {
   decodeLog,
   lookupEvent,
   lookupFunction,
+  lookupCommunity,
+  parseSelectorInput,
   parseSearchLimit,
   searchFunctions,
 } from "@atlas/core";
@@ -44,6 +46,8 @@ export interface CreateAppOptions {
   readonly logger?: boolean;
   readonly rateLimitPerMinute?: number;
   readonly upstreamTimeoutMs?: number;
+  /** Injected in tests; real service queries read-only community endpoint. */
+  readonly communityLookup?: typeof lookupCommunity;
   /** Browser origin policy. Defaults to dev origins plus `ATLAS_CORS_ORIGINS`. */
   readonly cors?: CorsPolicyOptions;
 }
@@ -240,6 +244,17 @@ export function createApp(options: CreateAppOptions = {}): FastifyInstance {
       }),
       upstreamTimeoutMs,
       "Signature search timed out.",
+    );
+  });
+
+  app.get("/v1/community/4byte/:selector", async (request) => {
+    const { selector } = request.params as { selector?: string };
+    if (!selector) throw new InvalidInputError("A selector path parameter is required.");
+    const normalized = parseSelectorInput(selector);
+    return withTimeout(
+      (options.communityLookup ?? lookupCommunity)(normalized),
+      upstreamTimeoutMs,
+      "4byte.directory lookup timed out.",
     );
   });
 

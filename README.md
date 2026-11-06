@@ -103,3 +103,7 @@ The importer instead derives signatures from first-party Solidity source pinned 
 ## Local-only development
 
 Development stays local until the user explicitly approves a specific hosted repository, push, publication, data write, or deployment action. Do not initialize Git or connect Lovable to a hosted repository during the local-only stage.
+
+## Optional 4byte.directory community comparison
+
+ATLAS exposes a **read-only**, **non-canonical** 4byte.directory lookup through `GET /v1/community/4byte/:selector`, the `atlas 4byte` CLI command, and the Studio Explorer compare button. It does not modify the Arkiv importer or canonical registry. See [docs/FOURBYTE_AND_CLI.md](docs/FOURBYTE_AND_CLI.md).

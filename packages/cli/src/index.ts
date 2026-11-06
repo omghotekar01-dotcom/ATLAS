@@ -7,6 +7,7 @@ export {
   type RunOptions,
 } from "./cli.js";
 export {
+  formatCommunity,
   formatDecode,
   formatEvent,
   formatHealth,

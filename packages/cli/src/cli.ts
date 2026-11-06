@@ -4,6 +4,7 @@ import { AtlasSdkError, AtlasClient, type AtlasClientOptions } from "@atlas/sdk"
 import {
   LogInputSchema,
   type CalldataDecodeResult,
+  type CommunityLookupResult,
   type EventLookupResult,
   type FunctionLookupResult,
   type FunctionSearchResult,
@@ -14,6 +15,7 @@ import {
 } from "@atlas/schemas";
 
 import {
+  formatCommunity,
   formatDecode,
   formatEvent,
   formatHealth,
@@ -28,6 +30,8 @@ export const CLI_VERSION = "0.1.0";
 export interface CliClient {
   health(): Promise<HealthResponse>;
   lookupFunction(selector: string): Promise<FunctionLookupResult>;
+  /** Optional only to keep existing injected test doubles backwards compatible. */
+  lookupCommunity?(selector: string): Promise<CommunityLookupResult>;
   searchFunctions(
     query: string,
     options: { limit?: number; cursor?: string },
@@ -182,6 +186,27 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
       await perform(
         () => clientFor().lookupFunction(selector),
         formatLookup,
+        Boolean(command.opts().json),
+      );
+    });
+
+  program
+    .command("4byte")
+    .argument("<selector>", "exact 4-byte function selector")
+    .option("--json", "print machine-readable JSON")
+    .description(
+      "Read unverified 4byte.directory suggestions through the ATLAS API; never Arkiv canonicals",
+    )
+    .action(async (selector: string, _options: unknown, command: Command) => {
+      await perform(
+        async () => {
+          const client = clientFor();
+          if (!client.lookupCommunity) {
+            throw new UsageError("This CLI client does not support 4byte community lookup.");
+          }
+          return client.lookupCommunity(selector);
+        },
+        formatCommunity,
         Boolean(command.opts().json),
       );
     });

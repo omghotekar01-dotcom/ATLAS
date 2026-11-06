@@ -8,6 +8,7 @@ export {
   type SearchPage,
 } from "./types.js";
 export { lookupFunction, parseSelectorInput, toCandidate } from "./resolver.js";
+export { lookupCommunity } from "./community.js";
 export {
   parseSearchLimit,
   searchFunctions,

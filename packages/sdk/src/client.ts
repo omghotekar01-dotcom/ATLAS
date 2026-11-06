@@ -1,6 +1,7 @@
 import {
   ApiErrorSchema,
   CalldataDecodeResultSchema,
+  CommunityLookupResultSchema,
   EventLookupResultSchema,
   FunctionLookupResultSchema,
   FunctionSearchResultSchema,
@@ -8,6 +9,7 @@ import {
   LogDecodeResultSchema,
   TransactionInvestigationSchema,
   type CalldataDecodeResult,
+  type CommunityLookupResult,
   type EventLookupResult,
   type FunctionLookupResult,
   type FunctionSearchResult,
@@ -154,6 +156,13 @@ export class AtlasClient {
         ...(options.cursor !== undefined ? { cursor: options.cursor } : {}),
       },
     });
+  }
+
+  lookupCommunity(selector: string): Promise<CommunityLookupResult> {
+    return this.request(
+      `/v1/community/4byte/${encodeURIComponent(selector)}`,
+      CommunityLookupResultSchema,
+    );
   }
 
   decodeCalldata(calldata: string): Promise<CalldataDecodeResult> {

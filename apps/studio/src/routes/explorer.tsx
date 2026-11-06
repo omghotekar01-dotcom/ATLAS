@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Loader2, Search } from "lucide-react";
 import { atlasClient } from "@/api/atlasClient";
-import type { ApiResult, ExplorerResponse } from "@/api/types";
+import type { ApiResult, CommunityLookupResult, ExplorerResponse } from "@/api/types";
 import { classifyQuery } from "@/lib/atlas/hex";
 import { sampleLookup } from "@/lib/atlas/fixtures";
 import { useSampleMode } from "@/lib/atlas/sample-mode";
@@ -40,12 +40,15 @@ function Explorer() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ApiResult<ExplorerResponse> | null>(null);
+  const [community, setCommunity] = useState<ApiResult<CommunityLookupResult> | null>(null);
+  const [communityLoading, setCommunityLoading] = useState(false);
   const { sample } = useSampleMode();
   const cls = classifyQuery(q);
   const canSubmit = cls.kind === "selector" || cls.kind === "signature" || cls.kind === "text";
 
   useEffect(() => {
     setResult(null);
+    setCommunity(null);
   }, [sample]);
 
   async function run(e: React.FormEvent) {
@@ -66,6 +69,17 @@ function Explorer() {
       );
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function compareCommunity() {
+    if (sample || cls.kind !== "selector" || communityLoading) return;
+    setCommunityLoading(true);
+    setCommunity(null);
+    try {
+      setCommunity(await atlasClient.lookupCommunity(cls.value));
+    } finally {
+      setCommunityLoading(false);
     }
   }
 
@@ -119,6 +133,7 @@ function Explorer() {
                 onChange={(e) => {
                   setQ(e.target.value);
                   setResult(null);
+                  setCommunity(null);
                 }}
                 placeholder="0xa9059cbb  or  transfer(address,uint256)"
                 spellCheck={false}
@@ -146,10 +161,51 @@ function Explorer() {
             ))}
           </div>
         </form>
+        <div className="mt-4 border-t border-border/70 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={sample || cls.kind !== "selector" || communityLoading}
+            onClick={compareCommunity}
+          >
+            {communityLoading && <Loader2 className="size-4 animate-spin" />}
+            Compare with 4byte.directory
+          </Button>
+          <p className="mt-2 text-xs text-subtle">
+            Optional community suggestions only — never canonical Arkiv data, verified ABI or safety
+            proof.
+          </p>
+        </div>
       </Panel>
 
       <div className="mt-6 space-y-4" aria-live="polite">
         {result && result.kind !== "ok" && <ResultState result={result} />}
+        {community && community.kind !== "ok" && <ResultState result={community} />}
+        {community?.kind === "ok" && (
+          <Panel>
+            <h2 className="text-base font-semibold">4byte.directory · unverified candidates</h2>
+            <p className="mt-1 text-sm text-subtle">
+              Community registry, not Arkiv canonical mirror.
+              {community.data.truncated ? " Results may be incomplete." : ""}
+            </p>
+            <ul className="mt-3 space-y-2">
+              {community.data.candidates.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="rounded-lg border border-border/70 p-3 font-mono text-sm break-all"
+                >
+                  {entry.signature}
+                  <span className="ml-2 text-xs text-subtle">Community ID {entry.id}</span>
+                </li>
+              ))}
+            </ul>
+            {community.data.warnings.map((warning) => (
+              <p key={warning} className="mt-2 text-xs text-subtle">
+                {warning}
+              </p>
+            ))}
+          </Panel>
+        )}
         {result?.kind === "ok" && (
           <>
             <div className="flex flex-wrap items-center gap-2">

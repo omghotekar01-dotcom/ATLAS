@@ -2,6 +2,7 @@ import type { AtlasErrorCode, FunctionLookupResult, FunctionSearchResult } from 
 
 export type {
   CalldataDecodeResult,
+  CommunityLookupResult,
   CalldataDecodeResult as DecodeCalldataResponse,
   FunctionLookupResult,
   FunctionLookupResult as FunctionLookupResponse,

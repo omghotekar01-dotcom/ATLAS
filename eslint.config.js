@@ -4,6 +4,7 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     ignores: [
+      "**/ETH-DEV/**",
       "**/dist/**",
       "**/node_modules/**",
       "**/.next/**",

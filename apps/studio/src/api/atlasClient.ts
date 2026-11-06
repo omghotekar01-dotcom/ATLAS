@@ -1,6 +1,7 @@
 import {
   ApiErrorSchema,
   CalldataDecodeResultSchema,
+  CommunityLookupResultSchema,
   EventLookupResultSchema,
   FunctionLookupResultSchema,
   FunctionSearchResultSchema,
@@ -12,6 +13,7 @@ import { z } from "zod";
 import type {
   ApiResult,
   CalldataDecodeResult,
+  CommunityLookupResult,
   EventLookupResult,
   FunctionLookupResult,
   FunctionSearchResult,
@@ -108,6 +110,14 @@ export const atlasClient = {
       FunctionSearchResultSchema,
       undefined,
       (data) => data.items.length === 0,
+    ),
+
+  lookupCommunity: (selector: string) =>
+    request<CommunityLookupResult>(
+      `/v1/community/4byte/${encodeURIComponent(selector)}`,
+      CommunityLookupResultSchema,
+      undefined,
+      (data) => data.candidates.length === 0,
     ),
 
   decodeCalldata: (calldata: string) =>

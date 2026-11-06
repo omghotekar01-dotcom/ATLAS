@@ -1,5 +1,6 @@
 import type {
   CalldataDecodeResult,
+  CommunityLookupResult,
   EventLookupResult,
   FunctionLookupResult,
   FunctionSearchResult,
@@ -31,6 +32,18 @@ export function formatLookup(result: FunctionLookupResult): string {
     `Function selector ${result.identifier}`,
     `Registry: ${result.registry}`,
     ...candidateLines("Signatures", result.candidates),
+    ...warningLines(result.warnings),
+  ].join("\n");
+}
+
+export function formatCommunity(result: CommunityLookupResult): string {
+  return [
+    `4byte.directory UNVERIFIED community suggestions for ${result.selector}`,
+    `Candidates: ${result.candidates.length} (upstream count: ${result.total})`,
+    ...result.candidates.map(
+      (candidate) => `  - ${candidate.signature}  (community id ${candidate.id})`,
+    ),
+    ...(result.truncated ? ["Additional candidates may exist; output was limited."] : []),
     ...warningLines(result.warnings),
   ].join("\n");
 }
