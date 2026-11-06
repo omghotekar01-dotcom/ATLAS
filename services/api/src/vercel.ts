@@ -22,7 +22,7 @@ function restoreFastifyPath(request: IncomingMessage): void {
  * Adapts the same Fastify app to the Vercel Node runtime without starting a
  * listener. The instance is created once per warm lambda and reused.
  *
- * `api/index.ts` at the deployment root only needs to export this handler:
+ * `api/[...path].ts` at the deployment root only needs to export this handler:
  *
  *   export default createVercelHandler();
  *

@@ -9,7 +9,7 @@ describe("Vercel Fastify adapter", () => {
     vi.restoreAllMocks();
   });
 
-  it("dispatches rewritten /api paths through Fastify and waits for its response", async () => {
+  it("dispatches rewritten /api paths through Fastify and preserves query parameters", async () => {
     const handler = createVercelHandler({
       dependencies: makeDependencies({
         functions: memoryFunctions([
@@ -30,13 +30,19 @@ describe("Vercel Fastify adapter", () => {
       const address = server.address();
       if (!address || typeof address === "string") throw new Error("Missing test server address.");
 
-      const response = await fetch(
-        `http://127.0.0.1:${address.port}/api/v1/functions/0xa9059cbb?source=test`,
+      const health = await fetch(`http://127.0.0.1:${address.port}/api/health?probe=vercel`);
+      expect(health.status).toBe(200);
+      await expect(health.json()).resolves.toMatchObject({
+        status: "ok",
+        arkiv: { connected: true },
+      });
+
+      const search = await fetch(
+        `http://127.0.0.1:${address.port}/api/v1/functions/search?q=transfer&limit=1`,
       );
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toMatchObject({
-        identifier: "0xa9059cbb",
-        candidates: [{ signature: "transfer(address,uint256)" }],
+      expect(search.status).toBe(200);
+      await expect(search.json()).resolves.toMatchObject({
+        items: [{ signature: "transfer(address,uint256)" }],
       });
     } finally {
       await new Promise<void>((resolve, reject) => {

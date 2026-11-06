@@ -1,9 +1,8 @@
 # Vercel deployment guide
 
 This guide prepares two separate Vercel projects from the ATLAS monorepo. It
-does not authorize creating projects or deploying. The workspace currently
-has no Git repository; Git setup and each deployment remain separate approval
-gates.
+does not authorize creating projects or deploying; each deployment remains a
+separate approval gate.
 
 ## Shared repository settings
 
@@ -56,14 +55,16 @@ value in Preview only if that Preview API is intentionally reachable.
 | Node.js           | `24.x`                                    |
 | Function duration | `30` seconds maximum                      |
 
-[`services/api/api/index.ts`](../services/api/api/index.ts) is the function
+[`services/api/api/[...path].ts`](../services/api/api/[...path].ts) is the function
 entry point. It exports the Fastify adapter from source, which is covered by
 `services/api/tsconfig.vercel.json`; do not use
 `services/api/src/server.ts` as a Vercel function because that file calls
 `listen()` and installs process signal handlers for a long-running server.
-The serverless handler does not listen on a port. The API's Vercel rewrite
-maps `/health` and `/v1/*` to a catch-all function route and preserves the
-Fastify route path.
+The serverless handler does not listen on a port. The entry is named
+`api/[...path].ts` so it matches the configured Vercel catch-all function.
+Rewrites map `/health` and `/v1/*` to `/api/...`; the adapter removes only the
+`/api` routing prefix and retains the original path and query string for
+Fastify. Vercel passes query parameters through these rewrites.
 
 Set these **Production** environment variable names in the API project only:
 
