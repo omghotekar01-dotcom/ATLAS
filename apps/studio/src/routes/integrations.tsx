@@ -3,11 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Activity, Database, RadioTower, ShieldAlert, RefreshCw } from "lucide-react";
 import { PageHeader, Panel, Pill } from "@/components/atlas/primitives";
 import { atlasClient, getApiBaseUrl } from "@/api/atlasClient";
+import { EnsV2PermissionPanel } from "@/components/atlas/EnsV2PermissionPanel";
 import { anonymousBlockNumber, type AnonymousBlockProof } from "@/lib/atlas/anon-rpc";
 
 type Health = Awaited<ReturnType<typeof atlasClient.health>>;
 type Artifact = Awaited<ReturnType<typeof atlasClient.getSwarmArtifact>>;
-type EnsRole = Awaited<ReturnType<typeof atlasClient.checkEnsV2Role>>;
 export const Route = createFileRoute("/integrations")({ component: Integrations });
 const sponsorStates = [
   ["Arkiv", "arkiv"],
@@ -22,24 +22,11 @@ function Integrations() {
   > | null>(null);
   const [health, setHealth] = useState<Health | null>(null);
   const [loading, setLoading] = useState(false);
-  const [ensName, setEnsName] = useState("");
-  const [ensAccount, setEnsAccount] = useState("");
-  const [ensRole, setEnsRole] = useState<EnsRole | null>(null);
-  const [ensLoading, setEnsLoading] = useState(false);
   const [anonBootstrap, setAnonBootstrap] = useState("");
   const [anonTarget, setAnonTarget] = useState("");
   const [anonProof, setAnonProof] = useState<AnonymousBlockProof | null>(null);
   const [anonError, setAnonError] = useState("");
   const [anonLoading, setAnonLoading] = useState(false);
-  async function checkEns() {
-    setEnsLoading(true);
-    setEnsRole(null);
-    try {
-      setEnsRole(await atlasClient.checkEnsV2Role(ensAccount.trim(), ensName.trim() || undefined));
-    } finally {
-      setEnsLoading(false);
-    }
-  }
   async function checkAnon() {
     setAnonLoading(true);
     setAnonProof(null);
@@ -144,66 +131,7 @@ function Integrations() {
         </Panel>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <Panel>
-          <h2 className="text-base font-semibold">ENSv2 · EAC permissions</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Read a real permissioned registry role. The API must have Mainnet or Sepolia RPC and the
-            correct ENSv2 registry address configured. Root-role verification is not name ownership
-            or ABI provenance.
-          </p>
-          <form
-            className="mt-3 space-y-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void checkEns();
-            }}
-          >
-            <label htmlFor="ens-account" className="block text-xs">
-              Account address
-            </label>
-            <input
-              id="ens-account"
-              value={ensAccount}
-              onChange={(event) => setEnsAccount(event.target.value)}
-              placeholder="0x…"
-              spellCheck={false}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 font-mono text-xs"
-            />
-            <label className="block w-full text-sm">
-              ENS publisher name (optional)
-              <input
-                value={ensName}
-                onChange={(event) => setEnsName(event.target.value)}
-                placeholder="name.eth"
-                className="h-10 w-full rounded-lg border border-input bg-background px-3"
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={!ensAccount.trim() || ensLoading}
-              className="h-10 rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
-            >
-              {ensLoading ? "Reading roles…" : "Check actual EAC role"}
-            </button>
-          </form>
-          {ensRole?.kind === "ok" && ensRole.data.publisher && (
-            <div className="mt-3 break-all text-xs">
-              <p>Publisher: {ensRole.data.publisher.name}</p>
-              <p>Registry owner: {ensRole.data.publisher.owner}</p>
-              <p>Resolver: {ensRole.data.publisher.resolver ?? "none"}</p>
-              <p>Chain ID: {ensRole.data.chainId}</p>
-            </div>
-          )}
-          {ensRole && (
-            <p className="mt-3 break-all text-xs" role="status">
-              {ensRole.kind === "ok"
-                ? `Authorized: ${ensRole.data.authorized ? "yes" : "no"} · block ${ensRole.data.blockNumber} · registry ${ensRole.data.registry}`
-                : ensRole.kind === "http-error" || ensRole.kind === "network-error"
-                  ? ensRole.message
-                  : "ENSv2 API not configured."}
-            </p>
-          )}
-        </Panel>
+        <EnsV2PermissionPanel />
         <Panel>
           <h2 className="text-base font-semibold">Ethereum Foundation Anon-RPC · Nym</h2>
           <p className="mt-2 text-sm text-muted-foreground">

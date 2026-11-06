@@ -19,6 +19,11 @@ describe("ENSv2 permissioned roles", () => {
       UpstreamUnavailableError,
     );
   });
+  it("rejects a name and explicit resource together before making a network request", async () => {
+    await expect(readEnsV2Role(account, "0", "1", {}, "atlas.eth")).rejects.toThrow(
+      InvalidInputError,
+    );
+  });
   it("pins registry calls to the verified block and sends read-only call fields", async () => {
     const calls: unknown[] = [];
     const fetchRpc = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -67,31 +72,64 @@ describe("ENSv2 permissioned roles", () => {
   });
 
   it("exposes a real adapter contract behind the API without altering other routes", async () => {
+    const roleLookup = vi.fn(async () => ({
+      kind: "ensv2-eac-role" as const,
+      chainId: 11155111 as const,
+      registry: account.toLowerCase() as never,
+      account: account.toLowerCase() as never,
+      resource: "0",
+      requiredRoles: "1",
+      roleBitmap: "1",
+      authorized: false,
+      blockNumber: "12345",
+      warnings: ["Test-injected response; not live evidence."],
+    }));
     const app = createApp({
       dependencies: makeDependencies(),
       rateLimitPerMinute: 0,
-      ensV2RoleLookup: async () => ({
-        kind: "ensv2-eac-role" as const,
-        chainId: 11155111 as const,
-        registry: account.toLowerCase() as never,
-        account: account.toLowerCase() as never,
-        resource: "0",
-        requiredRoles: "16777216",
-        roleBitmap: "0",
-        authorized: false,
-        blockNumber: "12345",
-        warnings: ["Test-injected response; not live evidence."],
-      }),
+      ensV2RoleLookup: roleLookup,
     });
-    const res = await app.inject({ method: "GET", url: `/v1/ensv2/roles/${account}` });
+    const res = await app.inject({
+      method: "GET",
+      url: `/v1/ensv2/roles/${account}?resource=0&role=1`,
+    });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
       authorized: false,
       resource: "0",
-      requiredRoles: "16777216",
+      requiredRoles: "1",
     });
+    expect(roleLookup).toHaveBeenCalledWith(account, "0", "1", undefined, undefined);
+    const named = await app.inject({
+      method: "GET",
+      url: `/v1/ensv2/roles/${account}?name=atlas.eth&role=65536`,
+    });
+    expect(named.statusCode).toBe(200);
+    expect(roleLookup).toHaveBeenLastCalledWith(
+      account,
+      undefined,
+      "65536",
+      undefined,
+      "atlas.eth",
+    );
     const bad = await app.inject({ method: "GET", url: `/v1/ensv2/roles/${account}?resource=-1` });
     expect(bad.statusCode).toBe(400);
+    await app.close();
+  });
+
+  it("rejects ENS name and resource together at the HTTP route", async () => {
+    const app = createApp({
+      dependencies: makeDependencies(),
+      rateLimitPerMinute: 0,
+    });
+    const response = await app.inject({
+      method: "GET",
+      url: `/v1/ensv2/roles/${account}?name=atlas.eth&resource=0&role=1`,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      error: { code: "INVALID_INPUT" },
+    });
     await app.close();
   });
 });

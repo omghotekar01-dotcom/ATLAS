@@ -128,6 +128,65 @@ describe("ATLAS event and transaction routes", () => {
     });
   });
 
+  describe("ENSv2 permission client", () => {
+    it("encodes provided name, resource and role query parameters and validates the response", async () => {
+      vi.stubEnv("VITE_ATLAS_API_URL", "https://api.example.test/");
+      const proof = {
+        kind: "ensv2-eac-role",
+        chainId: 11155111,
+        registry: "0xd4ebcbbdf463c9c45784603db0ddd499bc44a8b4",
+        account: "0xf633e7fc17e2bbe0d0965d18ec1821dcb754a3d3",
+        resource: "0",
+        requiredRoles: "1",
+        roleBitmap: "1",
+        authorized: true,
+        blockNumber: "123",
+        warnings: ["Read-only test response."],
+      };
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(proof))));
+
+      await expect(
+        atlasClient.checkEnsV2Role({
+          account: proof.account,
+          resource: "0",
+          role: "1",
+        }),
+      ).resolves.toMatchObject({ kind: "ok", data: { authorized: true } });
+      expect(fetch).toHaveBeenCalledWith(
+        `https://api.example.test/v1/ensv2/roles/${proof.account}?resource=0&role=1`,
+        expect.any(Object),
+      );
+    });
+
+    it("omits absent query values and never adds a resource to a name request", async () => {
+      vi.stubEnv("VITE_ATLAS_API_URL", "https://api.example.test");
+      const proof = {
+        kind: "ensv2-eac-role",
+        chainId: 11155111,
+        registry: "0xd4ebcbbdf463c9c45784603db0ddd499bc44a8b4",
+        account: "0xf633e7fc17e2bbe0d0965d18ec1821dcb754a3d3",
+        resource: "11",
+        requiredRoles: "16777216",
+        roleBitmap: "16777216",
+        authorized: true,
+        blockNumber: "123",
+        warnings: [],
+      };
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(proof))));
+
+      await atlasClient.checkEnsV2Role({
+        account: proof.account,
+        name: "name.eth",
+        role: "16777216",
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        `https://api.example.test/v1/ensv2/roles/${proof.account}?name=name.eth&role=16777216`,
+        expect.any(Object),
+      );
+    });
+  });
+
   it("posts logs for decoding and returns per-log results", async () => {
     vi.stubEnv("VITE_ATLAS_API_URL", "https://api.example.test");
     vi.stubGlobal(

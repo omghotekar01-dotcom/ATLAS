@@ -29,6 +29,13 @@ import type {
 
 const LogDecodeResponseSchema = z.object({ results: z.array(LogDecodeResultSchema) });
 
+export interface EnsV2RoleQuery {
+  readonly account: string;
+  readonly name?: string;
+  readonly resource?: string;
+  readonly role?: string;
+}
+
 /** Base URL from VITE_ATLAS_API_URL. Undefined means no request will be sent. */
 export function getApiBaseUrl(): string | undefined {
   const raw = import.meta.env.VITE_ATLAS_API_URL?.trim();
@@ -127,11 +134,17 @@ export const atlasClient = {
       (data) => data.candidates.length === 0,
     ),
 
-  checkEnsV2Role: (account: string, name?: string) =>
-    request<EnsV2RoleResult>(
-      `/v1/ensv2/roles/${encodeURIComponent(account)}${name ? `?name=${encodeURIComponent(name)}` : ""}`,
+  checkEnsV2Role: ({ account, name, resource, role }: EnsV2RoleQuery) => {
+    const query = new URLSearchParams();
+    if (name !== undefined) query.set("name", name);
+    if (resource !== undefined) query.set("resource", resource);
+    if (role !== undefined) query.set("role", role);
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return request<EnsV2RoleResult>(
+      `/v1/ensv2/roles/${encodeURIComponent(account)}${suffix}`,
       EnsV2RoleResultSchema,
-    ),
+    );
+  },
 
   explainCalldata: (calldata: string) =>
     request<ExplainResult>("/v1/explain", ExplainResultSchema, {
