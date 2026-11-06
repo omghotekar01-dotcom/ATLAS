@@ -10,6 +10,7 @@ import {
 
 import { AppShell } from "@/components/atlas/AppShell";
 import { SampleModeProvider } from "@/lib/atlas/sample-mode";
+import { PreferencesProvider } from "@/lib/atlas/preferences";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -92,12 +93,14 @@ function RootComponent() {
     <>
       <HeadContent />
       <QueryClientProvider client={queryClient}>
-        <SampleModeProvider>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-          <Toaster />
-        </SampleModeProvider>
+        <PreferencesProvider>
+          <SampleModeProvider>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+            <Toaster />
+          </SampleModeProvider>
+        </PreferencesProvider>
       </QueryClientProvider>
     </>
   );

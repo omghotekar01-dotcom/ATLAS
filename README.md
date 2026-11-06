@@ -4,7 +4,7 @@ ATLAS helps developers identify, decode, and investigate EVM contract interactio
 
 ## Status
 
-The full local vertical slice is implemented and tested: shared contracts, a
+The local vertical slice is implemented and tested: shared contracts, a
 provenance-aware importer, the Arkiv adapter, core lookup/decode logic, a chain
 reader, a Fastify REST API, a typed SDK, a CLI, and the seven-route Studio.
 Event Inspector and Transaction Lab now call the API, and Explorer/Decoder use
@@ -100,10 +100,23 @@ The evaluated candidate source is [ethereum-lists/4bytes](https://github.com/eth
 
 The importer instead derives signatures from first-party Solidity source pinned to a commit: [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) (MIT) and [ethereum/ERCs](https://github.com/ethereum/ERCs) (CC0-1.0). Records carry the commit, file path and line as provenance. Real dry runs validated 3,892 declarations (3,787 distinct signatures) across the two sources; see [docs/reports/dataset-assessment.md](docs/reports/dataset-assessment.md). Event records are extracted but not written yet; the Arkiv `atlas.event-signatures` read schema exists, while the importer event-write path is still pending. See [importer/README.md](importer/README.md) and [docs/data-quality.md](docs/data-quality.md).
 
-## Local-only development
+## Hackathon release and Arkiv judging
 
-Development stays local until the user explicitly approves a specific hosted repository, push, publication, data write, or deployment action. Do not initialize Git or connect Lovable to a hosted repository during the local-only stage.
+- **Production API**: https://atlas-api-ivory.vercel.app
+- **Try a real Arkiv lookup**: https://atlas-api-ivory.vercel.app/v1/functions/0x9010d07c
+- **Wallet that created the live entity**: `0xAd797f58aFD3265C00504382171eC0818262D3ca`.
+- **Arkiv Rabdi**: chain ID `7794095`; [transaction proof](https://rabdi.explorer.arkiv.network/tx/0x0ddf2304bc90eacf5430c0d253cf8560f7b3dbbbf62f58f77c7b8a7347623594).
+- **Sponsor rubric**: [schema](arkiv/schema.md), [friction](arkiv/friction.md), [reach](arkiv/reach.md), [why Arkiv](arkiv/why-arkiv.md), and [data quality](arkiv/data-quality.md).
+- **Submission checklist**: [docs/SUBMISSION.md](docs/SUBMISSION.md).
+- **Code license**: [MIT](LICENSE); imported source remains governed by its upstream MIT/CC0 license.
+- **AI use**: ChatGPT and VS Code Copilot were used for implementation, testing, review, CI, documentation and deployment assistance under human supervision. See [AI disclosure](docs/SUBMISSION.md#honest-ai-use-disclosure).
+
+The repository was originally local-first. It is now hosted by explicit user request.
+Only separately approved Arkiv signing/import operations may create more entities.
 
 ## Optional 4byte.directory community comparison
 
-ATLAS exposes a **read-only**, **non-canonical** 4byte.directory lookup through `GET /v1/community/4byte/:selector`, the `atlas 4byte` CLI command, and the Studio Explorer compare button. It does not modify the Arkiv importer or canonical registry. See [docs/FOURBYTE_AND_CLI.md](docs/FOURBYTE_AND_CLI.md).
+ATLAS includes a **read-only, non-canonical** community selector lookup at
+`GET /v1/community/4byte/:selector`, in `atlas 4byte`, and in the Studio Explorer.
+Community candidates never enter the Arkiv canonical mirror; they are unverified.
+See [4byte documentation](docs/FOURBYTE_AND_CLI.md).

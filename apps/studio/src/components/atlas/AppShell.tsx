@@ -1,11 +1,21 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Command as CmdIcon, Menu } from "lucide-react";
-import { NAV } from "@/lib/atlas/nav";
+import {
+  Menu,
+  Moon,
+  Sun,
+  Monitor,
+  Search,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+} from "lucide-react";
+import { NAV, NAV_GROUPS, type NavItem } from "@/lib/atlas/nav";
 import { useSampleMode } from "@/lib/atlas/sample-mode";
-import { getApiBaseUrl } from "@/api/atlasClient";
+import { usePreferences, type ThemePref } from "@/lib/atlas/preferences";
+import { getApiBaseUrl, atlasClient } from "@/api/atlasClient";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   CommandDialog,
   CommandEmpty,
@@ -16,141 +26,306 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-function Wordmark() {
+const COLLAPSE_KEY = "atlas.sidebar.collapsed";
+type BackendState = "unconfigured" | "checking" | "connected" | "degraded" | "unavailable";
+
+function useBackendState(): BackendState {
+  const [state, setState] = useState<BackendState>(getApiBaseUrl() ? "checking" : "unconfigured");
+  useEffect(() => {
+    if (!getApiBaseUrl()) return;
+    let mounted = true;
+    void atlasClient.health().then((result) => {
+      if (!mounted) return;
+      setState(
+        result.kind === "ok"
+          ? result.data.status === "ok"
+            ? "connected"
+            : "degraded"
+          : "unavailable",
+      );
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+  return state;
+}
+
+function AtlasMark() {
   return (
-    <Link to="/" className="flex items-center gap-2.5 rounded-md">
-      <span className="grid size-7 place-items-center rounded-lg bg-primary font-mono text-xs font-bold text-primary-foreground">
-        A
-      </span>
-      <span className="leading-tight">
-        <span className="block text-sm font-semibold tracking-[0.2em]">ATLAS</span>
-        <span className="hidden text-[10px] text-subtle lg:block">
-          Search. Decode. Investigate. Integrate.
-        </span>
-      </span>
-    </Link>
+    <span
+      className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-mono text-[13px] font-bold text-primary-foreground shadow-surface"
+      aria-hidden="true"
+    >
+      A
+    </span>
+  );
+}
+
+function Navigation({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const path = useRouterState({ select: (state) => state.location.pathname });
+  return (
+    <nav aria-label="Primary" className="flex flex-col gap-5">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label}>
+          {!collapsed && (
+            <p className="mb-2 px-2.5 text-[11px] font-semibold tracking-wide text-subtle-foreground">
+              {group.label}
+            </p>
+          )}
+          {collapsed && <div className="mx-auto mb-2 h-px w-6 bg-border" />}
+          <ul className="flex flex-col gap-0.5">
+            {group.items.map((item: NavItem) => {
+              const active =
+                item.to === "/" ? path === "/" : path === item.to || path.startsWith(item.to + "/");
+              return (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] transition-colors duration-150",
+                      active
+                        ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-secondary hover:text-foreground",
+                      collapsed && "justify-center px-0",
+                    )}
+                  >
+                    <item.icon className="size-[17px] shrink-0" aria-hidden="true" />
+                    {collapsed ? (
+                      <span className="sr-only">{item.label}</span>
+                    ) : (
+                      <span className="truncate">{item.label}</span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function ThemeControl() {
+  const { prefs, setPref } = usePreferences();
+  const Icon = prefs.theme === "dark" ? Moon : prefs.theme === "light" ? Sun : Monitor;
+  return (
+    <div className="flex items-center gap-1.5" title="Appearance">
+      <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+      <select
+        aria-label="Theme preference"
+        value={prefs.theme}
+        onChange={(event) => setPref("theme", event.target.value as ThemePref)}
+        className="h-9 max-w-[92px] rounded-lg border border-border bg-card px-1.5 text-xs text-foreground"
+      >
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="system">System</option>
+      </select>
+    </div>
   );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const path = useRouterState({ select: (s) => s.location.pathname });
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const path = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
+  const backend = useBackendState();
   const { sample, setSample } = useSampleMode();
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const configured = !!getApiBaseUrl();
-
+  const current = NAV.find((item) => item.to === path) ?? NAV[0];
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setCmdOpen((o) => !o);
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+    } catch {
+      /* storage optional */
+    }
+  }, []);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((value) => !value);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  const isActive = (to: string) => (to === "/" ? path === "/" : path.startsWith(to));
-
+  function toggleSidebar() {
+    setCollapsed((value) => {
+      try {
+        localStorage.setItem(COLLAPSE_KEY, value ? "0" : "1");
+      } catch {
+        /* storage optional */
+      }
+      return !value;
+    });
+  }
+  const backendText: Record<BackendState, string> = {
+    unconfigured: "Backend not configured",
+    checking: "Checking API…",
+    connected: "API connected",
+    degraded: "API degraded",
+    unavailable: "API unavailable",
+  };
   return (
-    <div className="min-h-screen">
-      <header className="glass sticky top-0 z-40 border-b border-border">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 md:px-6">
-          <Wordmark />
-          <nav
-            aria-label="Primary"
-            className="mx-auto hidden items-center gap-0.5 rounded-full border border-border bg-background/50 p-1 md:flex"
+    <div className="flex min-h-screen bg-background text-foreground">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:bg-card focus:p-3"
+      >
+        Skip to content
+      </a>
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 lg:flex",
+          collapsed ? "w-[68px]" : "w-[244px]",
+        )}
+        aria-label="Desktop navigation"
+      >
+        <div className={cn("flex h-14 items-center", collapsed ? "justify-center" : "px-4")}>
+          <Link
+            to="/"
+            className="flex items-center gap-2.5"
+            aria-label="ATLAS Developer Studio home"
           >
-            {NAV.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                className={cn(
-                  "rounded-full px-3 py-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground",
-                  isActive(n.to) && "bg-elevated text-foreground shadow-sm",
-                )}
-              >
-                {n.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <button
-              onClick={() => setCmdOpen(true)}
-              className="hidden items-center gap-2 rounded-lg border border-border bg-background/50 px-2.5 py-1 text-xs text-subtle hover:text-foreground sm:flex"
-              aria-label="Open command palette"
-            >
-              <CmdIcon className="size-3.5" /> <kbd className="font-mono">K</kbd>
-            </button>
-            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-              <SheetTrigger
-                className="rounded-lg border border-border p-1.5 md:hidden"
-                aria-label="Open navigation"
-              >
-                <Menu className="size-4" />
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72 bg-nav">
-                <SheetHeader>
-                  <SheetTitle className="tracking-[0.2em]">ATLAS</SheetTitle>
-                </SheetHeader>
-                <nav className="mt-2 flex flex-col gap-1 px-2" aria-label="Mobile">
-                  {NAV.map((n) => (
-                    <Link
-                      key={n.to}
-                      to={n.to}
-                      onClick={() => setSheetOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground",
-                        isActive(n.to) && "bg-elevated text-foreground",
-                      )}
-                    >
-                      <n.icon className="size-4" /> {n.label}
-                    </Link>
-                  ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
-          </div>
+            <AtlasMark />
+            {!collapsed && (
+              <span className="leading-tight">
+                <strong className="block text-[14px] tracking-wide">ATLAS</strong>
+                <small className="block text-[11px] text-muted-foreground">Developer Studio</small>
+              </span>
+            )}
+          </Link>
         </div>
+        <div className="flex-1 overflow-y-auto px-3 py-3">
+          <Navigation collapsed={collapsed} />
+        </div>
+        <div className="border-t border-sidebar-border p-2">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-lg text-[13px] text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-4" />
+            ) : (
+              <PanelLeftClose className="size-4" />
+            )}
+            {!collapsed && "Collapse sidebar"}
+          </button>
+        </div>
+      </aside>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-[280px] overflow-y-auto bg-sidebar p-0">
+          <SheetTitle className="sr-only">ATLAS Navigation</SheetTitle>
+          <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
+            <AtlasMark />
+            <strong>ATLAS</strong>
+          </div>
+          <div className="px-3 py-4">
+            <Navigation collapsed={false} onNavigate={() => setMobileOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="glass-nav sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-border px-3 sm:px-5">
+          <button
+            type="button"
+            aria-label="Open navigation"
+            onClick={() => setMobileOpen(true)}
+            className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary lg:hidden"
+          >
+            <Menu className="size-5" />
+          </button>
+          <div className="lg:hidden">
+            <AtlasMark />
+          </div>
+          <nav
+            aria-label="Breadcrumb"
+            className="hidden min-w-0 items-center gap-1.5 text-[13px] sm:flex"
+          >
+            <span className="text-muted-foreground">ATLAS</span>
+            <span className="text-subtle-foreground">/</span>
+            <span className="truncate font-medium">{current?.label ?? "Studio"}</span>
+          </nav>
+          <div className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Open command palette"
+            className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-[13px] text-muted-foreground hover:border-border-strong hover:text-foreground sm:inline-flex sm:w-[220px]"
+          >
+            <Search className="size-4" />
+            <span className="flex-1 text-left">Search pages</span>
+            <kbd className="rounded border border-border bg-secondary px-1 text-[11px]">Ctrl K</kbd>
+          </button>
+          <Link
+            to="/status"
+            title={backendText[backend]}
+            className="hidden items-center gap-2 text-xs text-muted-foreground md:inline-flex"
+          >
+            <span
+              className={cn(
+                "size-2 rounded-full",
+                backend === "connected"
+                  ? "bg-success"
+                  : backend === "degraded"
+                    ? "bg-warning"
+                    : backend === "unavailable"
+                      ? "bg-destructive"
+                      : "bg-muted-foreground",
+              )}
+            />
+            <span>{backendText[backend]}</span>
+          </Link>
+          <ThemeControl />
+          <Link
+            to="/settings"
+            className="hidden size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary sm:inline-flex"
+            aria-label="Settings"
+          >
+            <Settings className="size-4" />
+          </Link>
+        </header>
         {sample && (
-          <div className="border-t border-warning/30 bg-warning/10 py-1 text-center text-xs font-medium text-warning">
-            Sample preview is on. Explorer and Decoder results are fixtures, not live Arkiv data.
+          <div className="border-b border-warning/30 bg-warning-soft px-3 py-2 text-center text-xs font-medium text-warning">
+            Sample preview enabled — Explorer and Decoder fixtures are not live Arkiv data.
           </div>
         )}
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">{children}</main>
-
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-subtle md:px-6">
-          <span>ATLAS Studio</span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className={cn("size-1.5 rounded-full", configured ? "bg-primary" : "bg-subtle")}
-            />
-            {configured ? "API URL configured" : "Backend unconfigured"}
-          </span>
-        </div>
-      </footer>
-
-      <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
-        <CommandInput placeholder="Jump to a tool or action…" />
+        <main
+          id="main"
+          className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10"
+        >
+          {children}
+        </main>
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-4 text-xs text-subtle-foreground sm:px-8">
+          <span>ATLAS Developer Studio</span>
+          <span>Community data is unverified · Canonical data is source-provenanced</span>
+        </footer>
+      </div>
+      <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>
+        <CommandInput placeholder="Search pages and actions…" />
         <CommandList>
-          <CommandEmpty>No results.</CommandEmpty>
+          <CommandEmpty>No matching pages.</CommandEmpty>
           <CommandGroup heading="Navigate">
-            {NAV.map((n) => (
+            {NAV.map((item) => (
               <CommandItem
-                key={n.to}
-                value={`${n.label} ${n.hint}`}
+                key={item.to}
+                value={`${item.label} ${item.hint}`}
                 onSelect={() => {
-                  setCmdOpen(false);
-                  navigate({ to: n.to });
+                  setPaletteOpen(false);
+                  void navigate({ to: item.to });
                 }}
               >
-                <n.icon className="size-4" />
-                <span>{n.label}</span>
-                <span className="ml-auto text-xs text-subtle">{n.hint}</span>
+                <item.icon className="mr-2 size-4" />
+                {item.label}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -160,10 +335,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               value="toggle sample preview"
               onSelect={() => {
                 setSample(!sample);
-                setCmdOpen(false);
+                setPaletteOpen(false);
               }}
             >
-              {sample ? "Turn off sample preview" : "Turn on sample preview (not live)"}
+              {sample ? "Disable sample preview" : "Enable sample preview (not live)"}
             </CommandItem>
           </CommandGroup>
         </CommandList>

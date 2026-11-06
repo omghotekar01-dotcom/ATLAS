@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DecodeRouteImport } from './routes/decode'
+import { Route as DevelopersRouteImport } from './routes/developers'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ExplorerRouteImport } from './routes/explorer'
+import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 
@@ -25,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const DecodeRoute = DecodeRouteImport.update({
   id: '/decode',
   path: '/decode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevelopersRoute = DevelopersRouteImport.update({
+  id: '/developers',
+  path: '/developers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -42,6 +50,16 @@ const ExplorerRoute = ExplorerRouteImport.update({
   path: '/explorer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntegrationsRoute = IntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatusRoute = StatusRouteImport.update({
   id: '/status',
   path: '/status',
@@ -56,18 +74,24 @@ const TransactionsRoute = TransactionsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/decode': typeof DecodeRoute
+  '/developers': typeof DevelopersRoute
   '/docs': typeof DocsRoute
   '/events': typeof EventsRoute
   '/explorer': typeof ExplorerRoute
+  '/integrations': typeof IntegrationsRoute
+  '/settings': typeof SettingsRoute
   '/status': typeof StatusRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/decode': typeof DecodeRoute
+  '/developers': typeof DevelopersRoute
   '/docs': typeof DocsRoute
   '/events': typeof EventsRoute
   '/explorer': typeof ExplorerRoute
+  '/integrations': typeof IntegrationsRoute
+  '/settings': typeof SettingsRoute
   '/status': typeof StatusRoute
   '/transactions': typeof TransactionsRoute
 }
@@ -75,9 +99,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/decode': typeof DecodeRoute
+  '/developers': typeof DevelopersRoute
   '/docs': typeof DocsRoute
   '/events': typeof EventsRoute
   '/explorer': typeof ExplorerRoute
+  '/integrations': typeof IntegrationsRoute
+  '/settings': typeof SettingsRoute
   '/status': typeof StatusRoute
   '/transactions': typeof TransactionsRoute
 }
@@ -86,27 +113,36 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/decode'
+    | '/developers'
     | '/docs'
     | '/events'
     | '/explorer'
+    | '/integrations'
+    | '/settings'
     | '/status'
     | '/transactions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/decode'
+    | '/developers'
     | '/docs'
     | '/events'
     | '/explorer'
+    | '/integrations'
+    | '/settings'
     | '/status'
     | '/transactions'
   id:
     | '__root__'
     | '/'
     | '/decode'
+    | '/developers'
     | '/docs'
     | '/events'
     | '/explorer'
+    | '/integrations'
+    | '/settings'
     | '/status'
     | '/transactions'
   fileRoutesById: FileRoutesById
@@ -114,9 +150,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DecodeRoute: typeof DecodeRoute
+  DevelopersRoute: typeof DevelopersRoute
   DocsRoute: typeof DocsRoute
   EventsRoute: typeof EventsRoute
   ExplorerRoute: typeof ExplorerRoute
+  IntegrationsRoute: typeof IntegrationsRoute
+  SettingsRoute: typeof SettingsRoute
   StatusRoute: typeof StatusRoute
   TransactionsRoute: typeof TransactionsRoute
 }
@@ -135,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/decode'
       fullPath: '/decode'
       preLoaderRoute: typeof DecodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developers': {
+      id: '/developers'
+      path: '/developers'
+      fullPath: '/developers'
+      preLoaderRoute: typeof DevelopersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -158,6 +204,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExplorerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/integrations': {
+      id: '/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof IntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/status': {
       id: '/status'
       path: '/status'
@@ -178,9 +238,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DecodeRoute: DecodeRoute,
+  DevelopersRoute: DevelopersRoute,
   DocsRoute: DocsRoute,
   EventsRoute: EventsRoute,
   ExplorerRoute: ExplorerRoute,
+  IntegrationsRoute: IntegrationsRoute,
+  SettingsRoute: SettingsRoute,
   StatusRoute: StatusRoute,
   TransactionsRoute: TransactionsRoute,
 }

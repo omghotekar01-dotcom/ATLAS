@@ -27,8 +27,14 @@ describe("App routing", () => {
     expect(match("/").at(-1)?.routeId).not.toBe(rootRouteId);
   });
 
-  it("keeps all seven PRD routes and navigation entries", () => {
-    expect(NAV.map((entry) => entry.to)).toEqual(ROUTES);
+  it("retains all seven PRD routes and adds full developer pages", () => {
+    const destinations = NAV.map((entry) => entry.to);
+    expect(new Set(destinations).size).toBe(destinations.length);
+    for (const path of ROUTES) expect(destinations).toContain(path);
+    for (const path of ["/developers", "/integrations", "/settings"]) {
+      expect(destinations).toContain(path);
+      expect(match(path).at(-1)?.routeId).toBe(path);
+    }
 
     for (const path of ROUTES) {
       const matches = match(path);
