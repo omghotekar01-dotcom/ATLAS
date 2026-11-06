@@ -21,7 +21,7 @@ const proof = {
   authorized: true,
   blockNumber: "12079583",
   warnings: [],
-} as EnsV2RoleResult;
+} as unknown as EnsV2RoleResult;
 
 describe("ATLAS ENSv2 publisher evidence", () => {
   it("preserves the source record and never fabricates an ENS source binding", () => {
