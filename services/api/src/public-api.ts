@@ -1,4 +1,4 @@
-export { createApp, type CreateAppOptions } from "./app.js";
+export { createApp, type CreateAppOptions } from "./app-factory.js";
 export {
   DEV_CORS_ORIGINS,
   isAllowedOrigin,

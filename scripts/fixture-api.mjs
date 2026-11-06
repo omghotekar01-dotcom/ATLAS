@@ -9,7 +9,7 @@
  *
  *   node scripts/fixture-api.mjs --port 3112
  */
-import { createApp } from "../services/api/dist/app.js";
+import { createApp } from "../services/api/dist/app-factory.js";
 
 const portArgument = process.argv.indexOf("--port");
 const port = portArgument >= 0 ? Number(process.argv[portArgument + 1]) : 3112;

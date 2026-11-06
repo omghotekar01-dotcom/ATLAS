@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { encodeFunctionData, parseAbi, toEventSelector } from "viem";
 import { ApiErrorSchema, UpstreamUnavailableError } from "@atlas/schemas";
 
-import { createApp } from "./app.js";
+import { createApp } from "./app-factory.js";
 import {
   eventRecord,
   functionRecord,

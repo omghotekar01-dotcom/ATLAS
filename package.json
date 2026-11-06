@@ -8,6 +8,7 @@
   },
   "scripts": {
     "lint": "eslint .",
+    "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit && pnpm --filter @atlas/schemas typecheck && pnpm --filter @atlas/arkiv typecheck && pnpm --filter @atlas/core build && pnpm --filter @atlas/chain typecheck && pnpm --filter @atlas/importer typecheck && pnpm --filter @atlas/api typecheck && pnpm --filter @atlas/sdk typecheck && pnpm --filter @atlas/cli typecheck && pnpm --filter @atlas/studio typecheck",
     "test": "pnpm --filter @atlas/schemas test && pnpm --filter @atlas/arkiv test && pnpm --filter @atlas/importer test && pnpm --filter @atlas/core test && pnpm --filter @atlas/chain test && pnpm --filter @atlas/api test && pnpm --filter @atlas/sdk test && pnpm --filter @atlas/cli test && pnpm --filter @atlas/studio test",

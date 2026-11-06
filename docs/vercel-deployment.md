@@ -66,6 +66,14 @@ the Fastify framework and contains no `functions`, `rewrites`, or
 rewrites, as these compete with the framework's application routing. If you
 need to set a function duration, configure it under Vercel Project Settings →
 Functions rather than matching `src/server.ts` in `vercel.json`.
+Do not rename the source app factory or public package barrel to the Vercel
+recognized basenames `app`, `index`, or `server`: Vercel can select them as
+entry points instead of the listener. ATLAS keeps these as
+`src/app-factory.ts` and `src/public-api.ts`; a regression test enforces that
+`src/server.ts` is the only recognized entry point. The build also verifies
+that the compiled package's import and type exports resolve. See
+[Vercel's Fastify documentation](https://vercel.com/docs/frameworks/backend/fastify)
+for the supported entrypoint rules.
 
 Set these **Production** environment variable names in the API project only:
 
@@ -107,12 +115,16 @@ After an approved deployment, check:
 ```sh
 curl -i https://<api-origin>/health
 curl -i https://<api-origin>/v1/functions/0x9010d07c
+curl -i "https://<api-origin>/v1/functions/search?q=transfer&limit=1"
 ```
 
 Require HTTP 200, `/health` JSON with `status: "ok"` and
 `arkiv.connected: true`, and the verified OpenZeppelin record with its
 provenance. Confirm an unknown selector returns an empty result rather than a
-sample. Then load and refresh each Studio route directly, test the exact CORS
+sample. The selector and search responses must be ATLAS JSON (not a Vercel
+platform 404 or invalid-export error); verify the query returns the expected
+result. Check deployment runtime logs for entry-point or module-resolution
+errors. Then load and refresh each Studio route directly, test the exact CORS
 origin and an unlisted origin, and inspect the browser network panel for the
 API URL. The live record proof and transaction details are in
 [`arkiv-live-proof.md`](./arkiv-live-proof.md).

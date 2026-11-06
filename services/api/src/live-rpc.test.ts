@@ -3,7 +3,7 @@ import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 import { TransactionInvestigationSchema } from "@atlas/schemas";
 
-import { createApp } from "./app.js";
+import { createApp } from "./app-factory.js";
 import { createDefaultDependencies } from "./deps.js";
 
 /**

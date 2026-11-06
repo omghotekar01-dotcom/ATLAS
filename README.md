@@ -12,8 +12,10 @@ the same contracts.
 
 One real OpenZeppelin function record has been written to Arkiv Rabdi, read
 back, and confirmed through the API and Studio. This is **one record only**, not
-a full source import. Event signatures are not written; nothing is deployed or
-published, and the workspace is not a Git repository. See
+a full source import. Event signatures are not written, and no contract or
+dataset has been deployed; only that single record is published to Arkiv. The
+API's Vercel entry-point collision is addressed in source; production readiness
+still requires the live routing checks in the deployment guide. See
 [docs/arkiv-live-proof.md](docs/arkiv-live-proof.md),
 [docs/implementation-status.md](docs/implementation-status.md), and
 [docs/production-readiness.md](docs/production-readiness.md) for evidence and
@@ -54,6 +56,15 @@ usage live in [packages/sdk/README.md](packages/sdk/README.md) and
 `ATLAS_LIVE_RPC=1 ATLAS_RPC_URL_1=https://... pnpm --filter @atlas/chain test`.
 Gated Arkiv checks: `ATLAS_LIVE_ARKIV=1` plus `ARKIV_ACCESS_KEY` and
 `ATLAS_ARKIV_CREATOR_ADDRESS`.
+
+The API uses Vercel's native Fastify preset. Keep
+[`services/api/src/server.ts`](services/api/src/server.ts) as the sole recognized
+Fastify entry point; the app factory and package barrel are named
+`app-factory.ts` and `public-api.ts` to avoid Vercel's `app`/`index` auto-detection
+collision. The regression test audits recognized entry files, and the API build
+checks the compiled package exports. After an approved deployment, verify
+`/health`, `/v1/functions/0x9010d07c`, and `/v1/functions/search?q=transfer&limit=1`
+as described in [docs/vercel-deployment.md](docs/vercel-deployment.md).
 
 Run the cross-interface check
 with `pnpm consistency --api-url <url>` while an API is listening; the

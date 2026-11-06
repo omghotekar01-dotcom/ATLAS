@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createApp, type CreateAppOptions } from "./app.js";
+import { createApp, type CreateAppOptions } from "./app-factory.js";
 import {
   DEV_CORS_ORIGINS,
   isAllowedOrigin,

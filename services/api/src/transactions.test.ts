@@ -3,7 +3,7 @@ import { encodeFunctionData, parseAbi, toEventSelector } from "viem";
 import type { ChainTransaction } from "@atlas/chain";
 import { ChainIdSchema, HashSchema, NotFoundError, UpstreamUnavailableError } from "@atlas/schemas";
 
-import { createApp } from "./app.js";
+import { createApp } from "./app-factory.js";
 import {
   chainStore,
   eventRecord,

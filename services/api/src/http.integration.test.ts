@@ -11,7 +11,7 @@ import {
   CalldataDecodeResultSchema,
 } from "@atlas/schemas";
 
-import { createApp } from "./app.js";
+import { createApp } from "./app-factory.js";
 import { createDefaultDependencies } from "./deps.js";
 import { makeDependencies } from "./test-support.js";
 
