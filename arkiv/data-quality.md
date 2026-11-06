@@ -4,18 +4,18 @@ Track: [Mirror something Ethereum depends on](https://ethglobal.com/events/mumba
 
 ## Live data vs analyzed data (2026-11-06)
 
-| Measure | Verified count |
-| --- | ---: |
-| Live Arkiv function records | **1** |
-| Live Arkiv event records | **0** |
-| Live writes with read-back verification | **1** |
-| OpenZeppelin functions extracted offline | 544 |
-| OpenZeppelin events extracted offline | 159 |
-| Ethereum/ERCs functions extracted offline | 2,611 |
-| Ethereum/ERCs events extracted offline | 578 |
-| Combined distinct source signatures | 3,787 |
-| ERCs rejected declarations | 36 |
-| OpenZeppelin rejected declarations | 0 |
+| Measure                                   | Verified count |
+| ----------------------------------------- | -------------: |
+| Live Arkiv function records               |          **1** |
+| Live Arkiv event records                  |          **0** |
+| Live writes with read-back verification   |          **1** |
+| OpenZeppelin functions extracted offline  |            544 |
+| OpenZeppelin events extracted offline     |            159 |
+| Ethereum/ERCs functions extracted offline |          2,611 |
+| Ethereum/ERCs events extracted offline    |            578 |
+| Combined distinct source signatures       |          3,787 |
+| ERCs rejected declarations                |             36 |
+| OpenZeppelin rejected declarations        |              0 |
 
 The 3,787 count comes from *source analysis*, not Rabdi entity enumeration.
 Source report: [dataset assessment](../docs/reports/dataset-assessment.md).
