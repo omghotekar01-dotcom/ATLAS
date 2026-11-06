@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PublicArkivClient } from "@arkiv-network/sdk";
+import type { PublicArkivClient, WalletArkivClient } from "@arkiv-network/sdk";
 import type { Address, Hex } from "viem";
 import { toEventSelector } from "viem";
 import {
@@ -99,6 +99,46 @@ describe("ArkivEventRepository", () => {
     const repository = new ArkivEventRepository(fakeClient([page, page]), creator);
 
     await expect(repository.findByTopic0(topic0 as never)).rejects.toThrow("did not advance");
+  });
+
+  it("resolves an event by content hash for idempotent importing", async () => {
+    const repository = new ArkivEventRepository(fakeClient([[entity()]]), creator);
+    const result = await repository.findByRecordHash(`0x${"0".repeat(63)}2` as never);
+    expect(result).toHaveLength(1);
+    expect(result[0]?.topic0).toBe(topic0);
+  });
+
+  it("requires the trusted creator's wallet before writing", async () => {
+    const record = parseStoredEventSignature(entity(), creator);
+    const readOnly = new ArkivEventRepository(fakeClient([]), creator);
+    await expect(readOnly.put(record)).rejects.toThrow("wallet client");
+
+    const foreignWallet = {
+      account: { address: otherCreator },
+    } as unknown as WalletArkivClient;
+    const mismatched = new ArkivEventRepository(fakeClient([]), creator, foreignWallet);
+    await expect(mismatched.put(record)).rejects.toThrow("trusted creator");
+  });
+
+  it("sends canonical event schema values through a matching wallet", async () => {
+    const record = parseStoredEventSignature(entity(), creator);
+    const calls: unknown[] = [];
+    const wallet = {
+      account: { address: creator },
+      createEntity: async (...args: unknown[]) => {
+        calls.push(args);
+        return {
+          entityKey: `0x${"e".repeat(64)}`,
+          txHash: `0x${"f".repeat(64)}`,
+        };
+      },
+    } as unknown as WalletArkivClient;
+    const repository = new ArkivEventRepository(fakeClient([]), creator, wallet);
+    const written = await repository.put(record);
+    expect(written.txHash).toBe(`0x${"f".repeat(64)}`);
+    const values = (calls[0] as unknown[])[1] as Record<string, unknown>;
+    expect(values.topic0).toBe(topic0);
+    expect(values.indexed).toBe("1,1,0");
   });
 
   it("builds schema values for a future importer write", () => {
