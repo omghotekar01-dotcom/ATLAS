@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 
 import { createApp } from "./app-factory.js";
+import { registerStudio } from "./studio.js";
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "0.0.0.0";
@@ -9,6 +10,8 @@ const app = createApp({
   logger: process.env.ATLAS_LOG_LEVEL !== "silent",
   fastifyFactory: Fastify,
 });
+
+registerStudio(app);
 
 // Ensure plugins and routing are registered before Vercel accepts requests.
 // The default export is a real Node.js HTTP Server, not the Fastify factory.

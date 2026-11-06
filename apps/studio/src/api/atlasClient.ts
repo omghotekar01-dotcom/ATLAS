@@ -32,6 +32,7 @@ const LogDecodeResponseSchema = z.object({ results: z.array(LogDecodeResultSchem
 /** Base URL from VITE_ATLAS_API_URL. Undefined means no request will be sent. */
 export function getApiBaseUrl(): string | undefined {
   const raw = import.meta.env.VITE_ATLAS_API_URL?.trim();
+  if (raw === "same-origin") return globalThis.location?.origin;
   return raw ? raw.replace(/\/+$/, "") : undefined;
 }
 

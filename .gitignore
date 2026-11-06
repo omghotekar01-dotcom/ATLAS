@@ -12,3 +12,5 @@ coverage/
 .vercel/
 importer/.atlas-checkpoints/
 importer/.snapshots/
+
+/services/api/studio-bundle.json

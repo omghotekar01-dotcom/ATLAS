@@ -16,7 +16,8 @@
     "build": "tsc -p tsconfig.json && node scripts/check-package-exports.mjs",
     "typecheck": "pnpm --filter @atlas/schemas build && pnpm --filter @atlas/core build && pnpm --filter @atlas/chain build && pnpm --filter @atlas/arkiv build && tsc -p tsconfig.test.json",
     "test": "vitest run src",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "build:vercel": "node scripts/build-vercel.mjs"
   },
   "dependencies": {
     "@arkiv-network/sdk": "^1.0.1",

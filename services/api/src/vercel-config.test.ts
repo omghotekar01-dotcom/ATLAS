@@ -73,7 +73,7 @@ describe("Vercel Fastify configuration", () => {
 
   it("uses native Fastify routing without API functions, rewrites, or output directory", () => {
     expect(config.framework).toBe("fastify");
-    expect(config.buildCommand).toBe("pnpm --filter '@atlas/api...' run build");
+    expect(config.buildCommand).toBe("pnpm --filter @atlas/api run build:vercel");
     expect(config.functions).toBeUndefined();
     expect(config.rewrites).toBeUndefined();
     expect(config.outputDirectory).toBeUndefined();
