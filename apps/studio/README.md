@@ -23,3 +23,20 @@ pnpm --filter @atlas/studio build
 ```
 
 The frontend validates API responses with `@atlas/schemas`. Supported calls use the PRD contracts for `GET /v1/functions/:selector`, `GET /v1/functions/search`, `POST /v1/decode/calldata`, and `GET /health`. An HTTP error is not silently treated as a successful empty result.
+
+## Production deployment
+
+Deploy `apps/studio` as a **separate Vercel project** using `vite`,
+Root Directory `apps/studio`, build command
+`pnpm --filter '@atlas/studio...' run build`, output directory `dist`,
+Node.js 24.x and **Include source files outside Root Directory** enabled.
+Set the public `VITE_ATLAS_API_URL=https://atlas-api-ivory.vercel.app` for
+Production and Preview. This contains **no secret**.
+
+After Vercel allocates the Studio domain, set API `ATLAS_CORS_ORIGINS` to the
+exact Studio HTTPS origin; set `ATLAS_CORS_DEV_ORIGINS=false` for production.
+Redeploy the API if required for environment changes, and verify actual
+browser requests, not just a Vite shell response.
+
+The site has seven routes: `/`, `/explorer`, `/decode`, `/events`,
+`/transactions`, `/docs`, `/status`. Direct refresh of each route must work.
