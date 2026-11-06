@@ -54,6 +54,8 @@ jobs:
         env:
           SOURCE_BRANCH: ${{ github.head_ref }}
         run: |
+          git fetch --no-tags origin "$SOURCE_BRANCH"
+          git switch -C "$SOURCE_BRANCH" FETCH_HEAD
           pnpm exec prettier --write README.md apps/studio/README.md arkiv/*.md docs/SUBMISSION.md docs/DEMO_SCRIPT.md .github/workflows/ci.yml
           git config user.name "Om Ghotekar"
           git config user.email "omghotekar01@gmail.com"
