@@ -124,3 +124,5 @@ See [4byte documentation](docs/FOURBYTE_AND_CLI.md).
 ## Sponsor release and verification
 
 See the [sponsor readiness matrix](docs/SPONSOR_READINESS.md), [build and test commands](docs/TESTING.md), and [deployment checklist](docs/DEPLOYMENT.md). Studio exposes ten pages, including Developers, Integrations and Settings.
+
+The [ATLAS CLI guide](packages/cli/README.md) covers npm archive installation, release packaging, and sponsor commands.

@@ -11,7 +11,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "pnpm --filter @atlas/schemas build && pnpm --filter @atlas/sdk build && tsc -p tsconfig.test.json",
     "test": "vitest run src",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "pack:npm": "node scripts/pack.mjs"
   },
   "dependencies": {
     "@atlas/schemas": "workspace:*",
@@ -19,6 +20,8 @@
     "commander": "^14.0.2"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
     "vitest": "latest"
-  }
+  },
+  "version": "0.1.0"
 }

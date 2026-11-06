@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { Command, CommanderError } from "commander";
-import { AtlasSdkError, AtlasClient, type AtlasClientOptions } from "@atlas/sdk";
+import { AtlasSdkError, AtlasClient, DEFAULT_BASE_URL, type AtlasClientOptions } from "@atlas/sdk";
 import {
   LogInputSchema,
   type CalldataDecodeResult,
@@ -12,6 +12,7 @@ import {
   type FunctionLookupResult,
   type FunctionSearchResult,
   type HealthResponse,
+  type IntegrationStatus,
   type LogDecodeResult,
   type LogInput,
   type TransactionInvestigation,
@@ -35,6 +36,7 @@ export const CLI_VERSION = "0.1.0";
 
 export interface CliClient {
   health(): Promise<HealthResponse>;
+  integrationStatus?(): Promise<IntegrationStatus>;
   lookupFunction(selector: string): Promise<FunctionLookupResult>;
   /** Optional only to keep existing injected test doubles backwards compatible. */
   lookupCommunity?(selector: string): Promise<CommunityLookupResult>;
@@ -55,6 +57,7 @@ export interface CliClient {
 }
 
 export interface RunOptions {
+  readonly defaultApiUrl?: string;
   client?: CliClient;
   stdout?: (line: string) => void;
   stderr?: (line: string) => void;
@@ -131,10 +134,14 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
   const stdout = options.stdout ?? ((line: string) => process.stdout.write(`${line}\n`));
   const stderr = options.stderr ?? ((line: string) => process.stderr.write(`${line}\n`));
   const env = options.env ?? process.env;
-  const apiUrl = env.ATLAS_API_URL;
 
   let exitCode = 0;
   const program = new Command();
+  const resolveApiUrl = () =>
+    program.opts<{ apiUrl?: string }>().apiUrl ??
+    env.ATLAS_API_URL ??
+    options.defaultApiUrl ??
+    DEFAULT_BASE_URL;
 
   const fail = (error: unknown): void => {
     if (error instanceof AtlasSdkError) {
@@ -156,9 +163,8 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     if (options.client) return options.client;
     const timeoutRaw = program.opts().timeout as string | undefined;
     const timeoutMs = timeoutRaw ? parsePositiveInteger(timeoutRaw, "--timeout") : undefined;
-    const baseUrl = (program.opts().apiUrl as string | undefined) ?? apiUrl;
     const clientOptions: AtlasClientOptions = {
-      ...(baseUrl !== undefined ? { baseUrl } : {}),
+      baseUrl: resolveApiUrl(),
       ...(timeoutMs !== undefined ? { timeoutMs } : {}),
     };
     return new AtlasClient(clientOptions);
@@ -371,6 +377,25 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     });
 
   program
+    .command("integrations")
+    .option("--json", "print JSON")
+    .description("Check configured sponsor integration status")
+    .action(async (_options: unknown, command: Command) => {
+      await perform(
+        () => {
+          const client = clientFor();
+          if (!client.integrationStatus) throw new UsageError("Integration status is unavailable.");
+          return client.integrationStatus();
+        },
+        (status) =>
+          Object.entries(status)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("\n"),
+        Boolean(command.opts().json),
+      );
+    });
+
+  program
     .command("doctor")
     .option("--json", "print JSON")
     .description("Check API and Arkiv connectivity without writing anything")
@@ -380,7 +405,7 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
         if (command.opts().json) {
           stdout(JSON.stringify(health, null, 2));
         } else {
-          stdout(formatHealth(health, apiUrl ?? "http://localhost:3000"));
+          stdout(formatHealth(health, resolveApiUrl()));
         }
         exitCode = health.status === "ok" ? 0 : 1;
       } catch (error) {

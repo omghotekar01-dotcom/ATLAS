@@ -9,6 +9,7 @@ import {
   type EncodeFunctionDataParameters,
   getAddress,
   http,
+  isHex,
   keccak256,
   parseAbi,
   toHex,
@@ -145,6 +146,7 @@ export async function readEnsV2Role(
         method: "eth_call",
         params: [{ to: registry, data }, numberToHex(blockNumber)],
       });
+      if (!isHex(result)) throw new Error("ENSv2 registry returned invalid call data.");
       const method = EAC_ABI.find((item) => item.name === functionName);
       if (!method) throw new Error("Unknown ENSv2 registry view.");
       return decodeAbiParameters(method.outputs, result)[0] as ContractFunctionReturnType<

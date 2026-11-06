@@ -90,6 +90,23 @@ describe("atlas CLI", () => {
     expect(JSON.parse(io.stdout.join("\n"))).toMatchObject({ identifier: SELECTOR });
   });
 
+  it("reports sponsor readiness as JSON without promoting unprobed services", async () => {
+    const io = capture();
+    const status = {
+      arkiv: "connected",
+      swarm: "unconfigured",
+      ensv2: "configured-unprobed",
+      zeroG: "unconfigured",
+      anonRpc: "browser-only",
+    } as const;
+    const code = await run(["integrations", "--json"], {
+      client: fakeClient({ integrationStatus: async () => status }),
+      ...io.options,
+    });
+    expect(code).toBe(0);
+    expect(JSON.parse(io.stdout.join("\n"))).toEqual(status);
+  });
+
   it("searches with limit and cursor", async () => {
     const io = capture();
     const search = vi.fn(async () => ({
