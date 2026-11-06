@@ -1,4 +1,4 @@
-name: ATLAS live API diagnostic
+name: ATLAS API network reachability diagnosis
 
 on:
   pull_request:
@@ -10,30 +10,35 @@ permissions:
   contents: read
 
 jobs:
-  live-api:
+  network-probe:
     if: github.head_ref == 'diagnostic/atlas-api-live-20261106'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-      - name: Probe production HTTPS endpoints (no secrets)
+      - name: Compare DNS and outbound HTTPS reachability (read only)
         shell: bash
         run: |
           set -uo pipefail
-          base="https://atlas-api-ivory.vercel.app"
-          for path in health v1/functions/0x9010d07c 'v1/functions/search?q=getRoleMember'; do
-            echo "::group::GET /$path"
-            curl --silent --show-error --include --max-time 15 \
-              --output /tmp/atlas-response.txt --dump-header /tmp/atlas-headers.txt \
-              "$base/$path" || true
-            head -c 1600 /tmp/atlas-headers.txt || true
-            echo ""
-            head -c 1200 /tmp/atlas-response.txt || true
+          echo "=== DNS ==="
+          for host in example.com vercel.com atlas-api-ivory.vercel.app atlas-api-git-main-omio-studio.vercel.app; do
+            echo "::group::DNS $host"
+            getent ahostsv4 "$host" | head -n 3 || true
+            echo "::endgroup::"
+          done
+          for url in \
+            https://example.com \
+            https://vercel.com \
+            https://atlas-api-ivory.vercel.app/health \
+            https://atlas-api-git-main-omio-studio.vercel.app/health; do
+            echo "::group::GET $url"
+            curl --silent --show-error --location --connect-timeout 5 --max-time 9 \
+              --output /tmp/atlas-probe.txt \
+              --write-out 'http=%{http_code} remote_ip=%{remote_ip} dns=%{time_namelookup}s connect=%{time_connect}s total=%{time_total}s\n' \
+              "$url" || true
+            if test -f /tmp/atlas-probe.txt; then
+              head -c 250 /tmp/atlas-probe.txt || true
+              rm -f /tmp/atlas-probe.txt
+            fi
             echo ""
             echo "::endgroup::"
           done
-      - name: Assert real Arkiv data using existing project smoke script
-        run: node scripts/production-smoke.mjs https://atlas-api-ivory.vercel.app
