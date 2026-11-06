@@ -8,7 +8,7 @@ import { build } from "esbuild";
 
 const cli = fileURLToPath(new URL("../", import.meta.url));
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-const name = "@omghotekar01/atlas-cli";
+const name = "@omghotekar/atlas-cli";
 const defaultApiUrl = "https://atlas-api-ivory.vercel.app";
 const workspace = JSON.parse(await readFile(join(cli, "package.json"), "utf8"));
 const sdk = JSON.parse(await readFile(join(root, "packages/sdk/package.json"), "utf8"));

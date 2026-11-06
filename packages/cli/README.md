@@ -6,11 +6,11 @@ machine-readable JSON with `--json`. The CLI never writes to Arkiv.
 ## Install the release archive
 
 Requires Node.js 22.18 or newer. The public distribution name is
-`@omghotekar01/atlas-cli` and the executable is `atlas`. Build the archive
+`@omghotekar/atlas-cli` and the executable is `atlas`. Build the archive
 below or download the release archive, then install it from any directory:
 
 ```sh
-npm install -g ./omghotekar01-atlas-cli-0.1.0.tgz
+npm install -g ./omghotekar-atlas-cli-0.1.0.tgz
 atlas --version
 atlas --timeout 45000 lookup 0x9010d07c --json
 ```
@@ -31,7 +31,7 @@ pnpm --filter @atlas/cli pack:npm --smoke
 The archive is written to `.cache/npm/`. The smoke test installs it with npm
 in an isolated temporary project and checks the executable and sponsor help.
 After a scope owner publishes the archive, users can run
-`npm install -g @omghotekar01/atlas-cli`.
+`npm install -g @omghotekar/atlas-cli`.
 
 ## Build and run
 
