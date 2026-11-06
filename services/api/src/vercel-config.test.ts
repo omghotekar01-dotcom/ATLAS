@@ -6,7 +6,8 @@ import { functionRecord, makeDependencies, memoryFunctions } from "./test-suppor
 
 interface VercelConfig {
   readonly buildCommand: string;
-  readonly functions?: Readonly<Record<string, { readonly maxDuration: number }>>;
+  readonly framework: string;
+  readonly functions?: Readonly<Record<string, unknown>>;
   readonly outputDirectory?: string;
   readonly rewrites?: readonly unknown[];
 }
@@ -18,9 +19,10 @@ const serverEntry = readFileSync(new URL("./server.ts", import.meta.url), "utf8"
 const catchAllEntry = new URL("../api/[...path].ts", import.meta.url);
 
 describe("Vercel Fastify configuration", () => {
-  it("uses the native Fastify server entry without rewrites or a duplicate catch-all", () => {
+  it("uses native Fastify routing without API functions, rewrites, or output directory", () => {
+    expect(config.framework).toBe("fastify");
     expect(config.buildCommand).toBe("pnpm --filter '@atlas/api...' run build");
-    expect(config.functions).toEqual({ "src/server.ts": { maxDuration: 30 } });
+    expect(config.functions).toBeUndefined();
     expect(config.rewrites).toBeUndefined();
     expect(config.outputDirectory).toBeUndefined();
     expect(existsSync(catchAllEntry)).toBe(false);

@@ -53,17 +53,19 @@ value in Preview only if that Preview API is intentionally reachable.
 | Output Directory  | Leave unset                               |
 | Install Command   | `pnpm install --frozen-lockfile`          |
 | Node.js           | `24.x`                                    |
-| Function duration | `30` seconds maximum                      |
+| Function duration | Set in Project Settings → Functions       |
 
 Vercel's native Fastify support detects
 [`services/api/src/server.ts`](../services/api/src/server.ts) and serves the
 Fastify application as one function. It routes requests directly to Fastify,
 so `/health`, `/v1/functions/:selector`, `/v1/functions/search`, and all other
-registered API routes keep their original paths and query strings.
-[`services/api/vercel.json`](../services/api/vercel.json) sets the 30-second
-maximum duration on `src/server.ts`. Do not add API rewrites, an `api/`
-catch-all function, or an output directory: these would compete with the
-framework's application routing.
+registered API routes keep their original paths and query strings. The
+[`services/api/vercel.json`](../services/api/vercel.json) explicitly selects
+the Fastify framework and contains no `functions`, `rewrites`, or
+`outputDirectory` setting. Do not add an `api/` catch-all function or API
+rewrites, as these compete with the framework's application routing. If you
+need to set a function duration, configure it under Vercel Project Settings →
+Functions rather than matching `src/server.ts` in `vercel.json`.
 
 Set these **Production** environment variable names in the API project only:
 
