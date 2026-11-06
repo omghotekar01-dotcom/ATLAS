@@ -1,4 +1,4 @@
-name: ATLAS Vercel preview HTTP proof
+name: ATLAS production Arkiv smoke proof
 
 on:
   pull_request:
@@ -11,28 +11,29 @@ jobs:
   probe:
     if: github.head_ref == 'diagnostic/atlas-vercel-preview-20261106'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
-      - name: Probe preview deployment without credentials
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Probe real production API (read-only)
         shell: bash
         run: |
           set -uo pipefail
-          for route in '/health' '/v1/functions/0x9010d07c' '/v1/functions/search?q=getRoleMember'; do
-            echo "::group::GET https://atlas-gaohp2fg1-omio-studio.vercel.app$route"
-            rm -f /tmp/atlas-body /tmp/atlas-headers
-            curl --silent --show-error --max-time 18 \
+          base="https://atlas-api-ivory.vercel.app"
+          for route in '/health' '/v1/functions/0x9010d07c' '/v1/functions/search?q=getRoleMember' '/v1/functions/0x00000000'; do
+            echo "::group::GET $base$route"
+            rm -f /tmp/atlas-headers /tmp/atlas-body
+            curl --silent --show-error --max-time 15 \
               --dump-header /tmp/atlas-headers --output /tmp/atlas-body \
-              --write-out 'HTTP=%{http_code} TCP=%{time_connect}s TLS=%{time_appconnect}s TTFB=%{time_starttransfer}s total=%{time_total}s\\n' \
-              "https://atlas-gaohp2fg1-omio-studio.vercel.app$route" || true
-            head -c 1400 /tmp/atlas-headers || true
+              --write-out 'HTTP=%{http_code} TTFB=%{time_starttransfer}s TOTAL=%{time_total}s\\n' \
+              "$base$route" || true
+            test -f /tmp/atlas-headers && head -c 1300 /tmp/atlas-headers
             echo ""
-            head -c 1400 /tmp/atlas-body || true
+            test -f /tmp/atlas-body && head -c 2800 /tmp/atlas-body
             echo ""
             echo "::endgroup::"
           done
-      - name: Assert preview health responds with real JSON (Arkiv can be degraded in preview)
-        shell: bash
-        run: |
-          set -euo pipefail
-          reply=$(curl --silent --show-error --max-time 20 'https://atlas-gaohp2fg1-omio-studio.vercel.app/health')
-          node -e 'let x=JSON.parse(process.argv[1]); if (!["ok","degraded"].includes(x.status)||typeof x.arkiv?.connected !== "boolean") process.exit(1); console.log("PASS: Vercel preview served ATLAS API JSON, state:",x.status);' "$reply"
+      - name: Enforce canonical Arkiv data, provenance, and health
+        run: node scripts/production-smoke.mjs https://atlas-api-ivory.vercel.app
