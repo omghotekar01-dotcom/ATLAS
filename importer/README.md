@@ -138,3 +138,25 @@ distinct signatures sharing one selector are never collapsed.
 Checkpoints are versioned (`v1`), bound to the dataset identity (source, commit,
 tree digest, licence hash) and written atomically. A mismatch aborts rather than
 resuming against different data. They live in `.cache/` and are gitignored.
+
+## Separate, approval-gated Arkiv event writes
+
+The importer now includes an **event-only** writer. This is not executed by
+`dry-run`, function `import`, or the deployed read-only Fastify API.
+
+```sh
+# This checks and reports source records without any blockchain write:
+node importer/dist/cli.js dry-run --source openzeppelin-contracts --fetch --json
+
+# After a separate on-chain approval and fresh fee preflight ONLY:
+# ATLAS_WRITE_APPROVAL must be exactly "<datasetVersion>:events"
+pnpm --filter @atlas/importer run import:events --source openzeppelin-contracts \
+  --fetch --dataset-version openzeppelin-contracts@efaa6f78ab1d-2026-11-06 \
+  --max-records 1 --batch-size 1 --confirm-write
+```
+
+The event writer requires `ARKIV_ACCESS_KEY`, the local
+`ARKIV_PRIVATE_KEY` and an exactly matching `ATLAS_ARKIV_CREATOR_ADDRESS`.
+Use a **fresh event-only checkpoint**, bounded batches and mandatory read-back.
+Never place signing keys in GitHub Actions or the Vercel API. No additional
+event entity has been written as part of the implementation.
