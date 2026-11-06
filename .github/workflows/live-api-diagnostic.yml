@@ -1,0 +1,39 @@
+name: ATLAS live API diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-api:
+    if: github.head_ref == 'diagnostic/atlas-api-live-20261106'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Probe production HTTPS endpoints (no secrets)
+        shell: bash
+        run: |
+          set -uo pipefail
+          base="https://atlas-api-ivory.vercel.app"
+          for path in health v1/functions/0x9010d07c 'v1/functions/search?q=getRoleMember'; do
+            echo "::group::GET /$path"
+            curl --silent --show-error --include --max-time 15 \
+              --output /tmp/atlas-response.txt --dump-header /tmp/atlas-headers.txt \
+              "$base/$path" || true
+            head -c 1600 /tmp/atlas-headers.txt || true
+            echo ""
+            head -c 1200 /tmp/atlas-response.txt || true
+            echo ""
+            echo "::endgroup::"
+          done
+      - name: Assert real Arkiv data using existing project smoke script
+        run: node scripts/production-smoke.mjs https://atlas-api-ivory.vercel.app
