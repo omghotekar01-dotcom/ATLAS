@@ -76,7 +76,14 @@ async function withAnonymousRpc<T>(
     preExisting: { rpcProvider: provider },
   });
   try {
-    await timeBound(worker.ready, 55_000);
+    try {
+      await timeBound(worker.ready, 55_000);
+    } catch (cause) {
+      throw new Error(
+        `Nym bootstrap or worker initialization failed: ${cause instanceof Error ? cause.message : "unknown error"}`,
+        { cause },
+      );
+    }
     return await read(async (method, params = []) => {
       const id = ++serial;
       const response = await timeBound(
@@ -86,7 +93,12 @@ async function withAnonymousRpc<T>(
           body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
         }),
         40_000,
-      );
+      ).catch((cause: unknown) => {
+        throw new Error(
+          `Nym worker RPC request failed: ${cause instanceof Error ? cause.message : "unknown error"}`,
+          { cause },
+        );
+      });
       if (!response.ok) throw new Error(`Anon-RPC Nym worker returned HTTP ${response.status}.`);
       const payload: unknown = await timeBound(response.json(), 5_000);
       if (

@@ -1,5 +1,12 @@
 import {
   createPublicClient,
+  decodeAbiParameters,
+  encodeFunctionData,
+  numberToHex,
+  type ContractFunctionArgs,
+  type ContractFunctionName,
+  type ContractFunctionReturnType,
+  type EncodeFunctionDataParameters,
   getAddress,
   http,
   keccak256,
@@ -122,43 +129,44 @@ export async function readEnsV2Role(
     const bytecode = await client.getBytecode({ address: registry, blockNumber });
     if (!bytecode || bytecode === "0x")
       throw new Error("ENSv2 registry has no contract code at its configured address.");
+    // These registry views only need a block-pinned eth_call. Use the RPC
+    // request directly so Vercel's source checker does not instantiate viem's
+    // chain-specific transaction authorization types for a read-only call.
+    async function readRegistry<Name extends ContractFunctionName<typeof EAC_ABI, "view">>(
+      functionName: Name,
+      args: ContractFunctionArgs<typeof EAC_ABI, "view", Name>,
+    ) {
+      const data = encodeFunctionData({
+        abi: EAC_ABI,
+        functionName,
+        args,
+      } as EncodeFunctionDataParameters<typeof EAC_ABI>);
+      const result = await client.request({
+        method: "eth_call",
+        params: [{ to: registry, data }, numberToHex(blockNumber)],
+      });
+      const method = EAC_ABI.find((item) => item.name === functionName);
+      if (!method) throw new Error("Unknown ENSv2 registry view.");
+      return decodeAbiParameters(method.outputs, result)[0] as ContractFunctionReturnType<
+        typeof EAC_ABI,
+        "view",
+        Name
+      >;
+    }
+
     let publisher;
     if (name) {
       const [label, ...parents] = name.split(".").slice(0, -1);
       if (!label) throw new InvalidInputError("Expected a publisher label.");
       for (const parent of parents.reverse()) {
-        registry = await client.readContract({
-          address: registry,
-          abi: EAC_ABI,
-          blockNumber,
-          functionName: "getSubregistry",
-          args: [parent],
-        });
+        registry = await readRegistry("getSubregistry", [parent]);
         if (registry === zeroAddress)
           throw new NotFoundError("No active ENSv2 parent subregistry.");
       }
       const [owner, resolver, currentResource] = await Promise.all([
-        client.readContract({
-          address: registry,
-          abi: EAC_ABI,
-          blockNumber,
-          functionName: "findOwner",
-          args: [label],
-        }),
-        client.readContract({
-          address: registry,
-          abi: EAC_ABI,
-          blockNumber,
-          functionName: "getResolver",
-          args: [label],
-        }),
-        client.readContract({
-          address: registry,
-          abi: EAC_ABI,
-          blockNumber,
-          functionName: "getResource",
-          args: [BigInt(keccak256(toHex(label)))],
-        }),
+        readRegistry("findOwner", [label]),
+        readRegistry("getResolver", [label]),
+        readRegistry("getResource", [BigInt(keccak256(toHex(label)))]),
       ]);
       if (owner === zeroAddress)
         throw new NotFoundError("No active ENSv2 registration for this name.");
@@ -166,20 +174,8 @@ export async function readEnsV2Role(
       publisher = { name, owner, resolver: resolver === zeroAddress ? null : resolver };
     }
     const [authorized, roleBitmap] = await Promise.all([
-      client.readContract({
-        address: registry,
-        abi: EAC_ABI,
-        blockNumber,
-        functionName: "hasRoles",
-        args: [resource, role, account],
-      }),
-      client.readContract({
-        address: registry,
-        abi: EAC_ABI,
-        blockNumber,
-        functionName: "roles",
-        args: [resource, account],
-      }),
+      readRegistry("hasRoles", [resource, role, account]),
+      readRegistry("roles", [resource, account]),
     ]);
     return EnsV2RoleResultSchema.parse({
       kind: "ensv2-eac-role",
