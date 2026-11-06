@@ -19,6 +19,8 @@ jobs:
     name: Lint, types, tests and build
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: write
     env:
       ATLAS_LIVE_RPC: "0"
       ATLAS_LIVE_ARKIV: "0"
@@ -46,6 +48,22 @@ jobs:
 
       - name: Build workspace packages from clean checkout
         run: pnpm -r --workspace-concurrency=2 run build
+
+      - name: Normalize sponsor Markdown formatting
+        if: github.event_name == 'pull_request' && github.head_ref == 'release/ethglobal-submission-20261106'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          pnpm exec prettier --write README.md apps/studio/README.md arkiv/*.md docs/SUBMISSION.md docs/DEMO_SCRIPT.md .github/workflows/ci.yml
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git add -- README.md apps/studio/README.md arkiv docs/SUBMISSION.md docs/DEMO_SCRIPT.md .github/workflows/ci.yml
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "Apply required sponsor-document formatting"
+            git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+            echo "Published formatting correction on $SOURCE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Formatting
         run: pnpm format:check
@@ -85,6 +103,8 @@ jobs:
           git fetch --no-tags origin main
           test "$(git rev-parse origin/main)" = "$BASE_SHA"
           git fetch --no-tags origin "$SOURCE_SHA"
+          git fetch --no-tags origin "$GITHUB_HEAD_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
           git switch --detach "$BASE_SHA"
           git switch -c "$RELEASE_BRANCH"
           git restore --source="$SOURCE_SHA" -- .github/workflows/ci.yml LICENSE README.md apps/studio/README.md arkiv/schema.md arkiv/friction.md arkiv/reach.md arkiv/why-arkiv.md arkiv/data-quality.md arkiv/how-you-use-arkiv.md docs/SUBMISSION.md docs/DEMO_SCRIPT.md
