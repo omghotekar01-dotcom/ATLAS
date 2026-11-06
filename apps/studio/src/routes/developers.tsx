@@ -5,19 +5,14 @@ import { PageHeader, Panel } from "@/components/atlas/primitives";
 import { getApiBaseUrl } from "@/api/atlasClient";
 
 export const Route = createFileRoute("/developers")({ component: Developers });
+const npmPackage = "@omghotekar/atlas-cli@0.1.0";
+const runAtlas = `npx --yes --package=${npmPackage} atlas`;
 const examples = [
-  { title: "Check API and Arkiv", command: "node packages/cli/dist/bin.js doctor" },
+  { title: "Check CLI version", command: `${runAtlas} --version` },
+  { title: "Check API and Arkiv", command: `${runAtlas} --timeout 45000 doctor` },
   {
     title: "Canonical Arkiv lookup",
-    command: "node packages/cli/dist/bin.js lookup 0x9010d07c --json",
-  },
-  {
-    title: "Unverified 4byte comparison",
-    command: "node packages/cli/dist/bin.js 4byte 0xa9059cbb --json",
-  },
-  {
-    title: "Decode a transaction",
-    command: "node packages/cli/dist/bin.js tx <transaction-hash> --chain 1",
+    command: `${runAtlas} --timeout 45000 lookup 0x9010d07c --json`,
   },
 ];
 function Developers() {
@@ -45,9 +40,15 @@ function Developers() {
             <h2 className="text-base font-semibold">CLI quickstart</h2>
           </div>
           <p className="mb-4 text-sm text-muted-foreground">
-            From the monorepo root, build once and use the installed CLI. No wallet is required for
-            read-only lookups.
+            Run these commands from any directory with Node.js 22.18 or newer. The public CLI
+            defaults to the ATLAS API. Pass <code>--api-url</code> to query another deployment.
           </p>
+          <a
+            href="https://www.npmjs.com/package/@omghotekar/atlas-cli"
+            className="mb-4 inline-block text-sm font-medium text-primary hover:underline"
+          >
+            View the ATLAS CLI on npm
+          </a>
           <div className="space-y-3">
             {examples.map((item) => (
               <div key={item.title} className="rounded-lg border border-border bg-code p-3">

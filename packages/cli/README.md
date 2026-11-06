@@ -3,6 +3,13 @@
 Command-line client for the ATLAS REST API. Human-readable output by default,
 machine-readable JSON with `--json`. The CLI never writes to Arkiv.
 
+## Run from npm
+
+```sh
+npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --version
+npm install -g @omghotekar/atlas-cli@0.1.0
+```
+
 ## Install the release archive
 
 Requires Node.js 22.18 or newer. The public distribution name is
@@ -30,8 +37,6 @@ pnpm --filter @atlas/cli pack:npm --smoke
 
 The archive is written to `.cache/npm/`. The smoke test installs it with npm
 in an isolated temporary project and checks the executable and sponsor help.
-After a scope owner publishes the archive, users can run
-`npm install -g @omghotekar/atlas-cli`.
 
 ## Build and run
 

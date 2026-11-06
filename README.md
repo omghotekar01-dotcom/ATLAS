@@ -6,7 +6,7 @@ ATLAS helps developers identify, decode, and investigate EVM contract interactio
 
 The local vertical slice is implemented and tested: shared contracts, a
 provenance-aware importer, the Arkiv adapter, core lookup/decode logic, a chain
-reader, a Fastify REST API, a typed SDK, a CLI, and the seven-route Studio.
+reader, a Fastify REST API, a typed SDK, a CLI, and the ten-route Studio.
 Event Inspector and Transaction Lab now call the API, and Explorer/Decoder use
 the same contracts.
 
@@ -26,6 +26,17 @@ open gates.
 - Node.js 24.13.0 (or another supported Node.js version `>=22.18.0 <25`)
 - pnpm 11.25.0
 
+## Public CLI
+
+Run the [ATLAS CLI on npm](https://www.npmjs.com/package/@omghotekar/atlas-cli)
+from any directory with Node.js 22.18 or newer:
+
+```sh
+npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --timeout 45000 lookup 0x9010d07c --json
+```
+
+It uses the public ATLAS API by default. Use `--api-url` to query another deployment.
+
 ## Local setup
 
 ```sh
@@ -41,7 +52,7 @@ pnpm build
 pnpm build
 ARKIV_ACCESS_KEY=... ATLAS_ARKIV_CREATOR_ADDRESS=0x... PORT=3000   node services/api/dist/server.js
 
-# CLI (same API contract; no publishing)
+# CLI (local workspace build)
 node packages/cli/dist/bin.js doctor
 node packages/cli/dist/bin.js lookup 0xa9059cbb
 node packages/cli/dist/bin.js tx 0x... --chain 1
