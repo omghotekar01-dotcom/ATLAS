@@ -58,3 +58,41 @@ jobs:
 
       - name: Build all packages
         run: pnpm build
+
+  prepare_attributed_release:
+    name: Create correctly attributed release branch
+    needs: validate
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'fix/vercel-api-production-recovery-20261106'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create reviewed commit with verified attribution
+        env:
+          BASE_SHA: 9ebb74cdd9bca9c69a57d047e777f06d3a2d1ae7
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_BRANCH: release/chatgpt-recovery-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git fetch --no-tags origin "$SOURCE_SHA"
+          git switch --detach "$BASE_SHA"
+          git switch -c "$RELEASE_BRANCH"
+          git restore --source="$SOURCE_SHA" -- .github/workflows/ci.yml docs/CHATGPT_HANDOFF.md scripts/production-smoke.mjs
+          git add -- .github/workflows/ci.yml docs/CHATGPT_HANDOFF.md scripts/production-smoke.mjs
+          git diff --cached --check
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git commit -m "Add cloud CI, production checks and recovery handoff"
+          test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
