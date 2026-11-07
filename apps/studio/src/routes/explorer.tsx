@@ -53,7 +53,6 @@ function Explorer() {
     setAutomaticFallback(false);
   }, [sample]);
 
-
   async function executeLookup(input: string) {
     const lookup = classifyQuery(input);
     if (lookup.kind !== "selector" && lookup.kind !== "signature" && lookup.kind !== "text") return;
@@ -68,9 +67,10 @@ function Explorer() {
     }
     setLoading(true);
     try {
-      const canonical = lookup.kind === "selector"
-        ? await atlasClient.getFunctionBySelector(lookup.value)
-        : await atlasClient.searchFunctions(lookup.value);
+      const canonical =
+        lookup.kind === "selector"
+          ? await atlasClient.getFunctionBySelector(lookup.value)
+          : await atlasClient.searchFunctions(lookup.value);
       setResult(canonical);
       if (lookup.kind === "selector" && canonical.kind === "empty") {
         setAutomaticFallback(true);
@@ -174,7 +174,10 @@ function Explorer() {
               <button
                 type="button"
                 key={ex}
-                onClick={() => { setQ(ex); void executeLookup(ex); }}
+                onClick={() => {
+                  setQ(ex);
+                  void executeLookup(ex);
+                }}
                 className="rounded-md border border-border px-2 py-1 font-mono text-xs text-subtle hover:text-primary"
               >
                 {ex}
@@ -202,7 +205,10 @@ function Explorer() {
       <div className="mt-6 space-y-4" aria-live="polite">
         {result?.kind === "empty" && !sample && automaticFallback ? (
           <Banner tone="neutral" title="Not yet imported into Arkiv">
-            The canonical registry returned no entity for this selector. {communityLoading ? "Checking 4byte.directory suggestions…" : "Public community suggestions are shown separately when available."}
+            The canonical registry returned no entity for this selector.{" "}
+            {communityLoading
+              ? "Checking 4byte.directory suggestions…"
+              : "Public community suggestions are shown separately when available."}
             Community records do not become canonical Arkiv records.
           </Banner>
         ) : (
@@ -214,10 +220,13 @@ function Explorer() {
             <h2 className="text-base font-semibold">4byte.directory · unverified candidates</h2>
             <p className="mt-1 text-sm text-subtle">
               {automaticFallback ? "Automatic fallback from a missing Arkiv record. " : ""}
-              Community registry, not Arkiv canonical mirror. These candidates may collide and are not source verified.
+              Community registry, not Arkiv canonical mirror. These candidates may collide and are
+              not source verified.
               {community.data.truncated ? " Results may be incomplete." : ""}
             </p>
-            <p className="mt-2 text-xs text-warning">{community.data.candidates.length} unverified community candidates, not Arkiv imports.</p>
+            <p className="mt-2 text-xs text-warning">
+              {community.data.candidates.length} unverified community candidates, not Arkiv imports.
+            </p>
             <ul className="mt-3 space-y-2">
               {community.data.candidates.map((entry) => (
                 <li

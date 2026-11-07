@@ -25,10 +25,10 @@ The repository already implements a bounded **server-side** adapter at `services
 
 To enable **real 0G inference**, in the authorized Vercel project environment add:
 
-| Server variable | Value |
-| --- | --- |
-| `ATLAS_0G_API_KEY` | Private Computer API key created in your 0G account; keep it server-side only |
-| `ATLAS_0G_MODEL` | Exact available private-compatible chat model ID from https://pc.0g.ai/models |
+| Server variable                 | Value                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `ATLAS_0G_API_KEY`              | Private Computer API key created in your 0G account; keep it server-side only                           |
+| `ATLAS_0G_MODEL`                | Exact available private-compatible chat model ID from https://pc.0g.ai/models                           |
 | `ATLAS_0G_ALLOW_PUBLIC_EXPLAIN` | `true` only if willing to expose bounded server-paid requests to visitors; enforce usage limits/credits |
 
 Redeploy after updating the **production** environment. Do **not** put the key in `VITE_` variables or the GitHub repository. The existing API has per-IP rate limiting; this is **not** a complete cost-cap solution, so use provider-side caps and disable public inference when credits are not available.

@@ -124,12 +124,16 @@ function Decoder() {
               >
                 Load live Arkiv example
               </button>
-              <button type="button" onClick={() => {
-                setRaw(EXAMPLE);
-                setResult(null);
-                setExplanation(null);
-                setIllustration(false);
-              }} className="text-xs text-subtle hover:text-primary">
+              <button
+                type="button"
+                onClick={() => {
+                  setRaw(EXAMPLE);
+                  setResult(null);
+                  setExplanation(null);
+                  setIllustration(false);
+                }}
+                className="text-xs text-subtle hover:text-primary"
+              >
                 ERC20 example (not imported)
               </button>
             </div>
@@ -205,48 +209,74 @@ function Decoder() {
         </Panel>
       </div>
 
-
       <Panel className="mt-5 border-primary/20">
         <h2 className="text-base font-semibold">0G Private Computer · Evidence explainer</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Start with the live Arkiv example above and press Decode. Compare a local
-          illustrative explanation with a real private 0G model request. Real inference requires
-          the server-side 0G key, supported model, credits and a provider request ID.
+          Start with the live Arkiv example above and press Decode. Compare a local illustrative
+          explanation with a real private 0G model request. Real inference requires the server-side
+          0G key, supported model, credits and a provider request ID.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="outline" type="button" onClick={() => {
-            setRaw(ARKIV_EXAMPLE);
-            setSample(false);
-            setResult(null);
-            setExplanation(null);
-            setIllustration(false);
-          }}>1. Load live Arkiv example</Button>
-          <Button variant="outline" type="button" disabled={sample || result?.kind !== "ok" || !result.data.decoded.some((item) => item.decodeStatus === "success")} onClick={() => {
-            setIllustration(true);
-            setExplanation(null);
-          }}>2. Preview local illustration</Button>
-          <Button type="button" disabled={sample || result?.kind !== "ok" || !result.data.decoded.some((item) => item.decodeStatus === "success") || explainLoading} onClick={() => void explain()}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              setRaw(ARKIV_EXAMPLE);
+              setSample(false);
+              setResult(null);
+              setExplanation(null);
+              setIllustration(false);
+            }}
+          >
+            1. Load live Arkiv example
+          </Button>
+          <Button
+            variant="outline"
+            type="button"
+            disabled={
+              sample ||
+              result?.kind !== "ok" ||
+              !result.data.decoded.some((item) => item.decodeStatus === "success")
+            }
+            onClick={() => {
+              setIllustration(true);
+              setExplanation(null);
+            }}
+          >
+            2. Preview local illustration
+          </Button>
+          <Button
+            type="button"
+            disabled={
+              sample ||
+              result?.kind !== "ok" ||
+              !result.data.decoded.some((item) => item.decodeStatus === "success") ||
+              explainLoading
+            }
+            onClick={() => void explain()}
+          >
             {explainLoading ? "Calling 0G…" : "3. Request REAL 0G inference"}
           </Button>
         </div>
         <p className="mt-3 text-xs text-warning">
-          Local illustration never calls 0G and never produces a provider request ID.
-          It is a product demonstration, not sponsor qualification evidence.
+          Local illustration never calls 0G and never produces a provider request ID. It is a
+          product demonstration, not sponsor qualification evidence.
         </p>
       </Panel>
 
       <div className="mt-6 space-y-4" aria-live="polite">
-
         {illustration && result?.kind === "ok" && (
           <Panel className="border-warning/30">
             <Pill tone="warning">LOCAL ILLUSTRATION · NOT 0G INFERENCE</Pill>
             <h2 className="mt-3 font-semibold">Evidence-grounded explanation preview</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              The canonical ABI signature {result.data.decoded.find((item) => item.decodeStatus === "success")?.signature ?? "unknown"}
-              describes the function input fields. This deterministic decode cannot establish
-              the return value, transaction success, authorization or contract safety. The
-              signature's source provenance belongs to the Arkiv record; checking its source
-              is separate from predicting behavior.
+              The canonical ABI signature{" "}
+              {result.data.decoded.find((item) => item.decodeStatus === "success")?.signature ??
+                "unknown"}
+              describes the function input fields. This deterministic decode cannot establish the
+              return value, transaction success, authorization or contract safety. The signature's
+              source provenance belongs to the Arkiv record; checking its source is separate from
+              predicting behavior.
             </p>
             <p className="mt-2 text-xs text-warning">
               Provider: none · Request ID: none · AI requests sent: 0
