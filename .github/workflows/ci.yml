@@ -67,6 +67,24 @@ jobs:
             echo "Published formatting correction on $SOURCE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Normalize original branding and illustration formatting
+        if: github.event_name == 'pull_request' && github.head_ref == 'feat/atlas-authentic-brand-and-polish-20261107'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$SOURCE_BRANCH"
+          git switch -C "$SOURCE_BRANCH" FETCH_HEAD
+          pnpm exec prettier --write apps/studio/index.html apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css apps/studio/src/components/atlas/AppShell.tsx
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git add -- apps/studio/index.html apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css apps/studio/src/components/atlas/AppShell.tsx
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "Format ATLAS original branding and evidence UI"
+            git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+          fi
+
       - name: Formatting
         run: pnpm format:check
 
@@ -121,3 +139,42 @@ jobs:
           test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
           echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+
+  atlas_authentic_brand_release:
+    name: Ship validated ATLAS original brand under correct author
+    needs: validate
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'feat/atlas-authentic-brand-and-polish-20261107'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out full reviewed history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create correctly attributed release from validated files
+        env:
+          BASE_SHA: 8e1bfe2fa00bf95a701543522a18f5b526e6a326
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          SOURCE_BRANCH: feat/atlas-authentic-brand-and-polish-20261107
+          RELEASE_BRANCH: feat/atlas-brand-final-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git fetch --no-tags origin "$SOURCE_BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          git switch --detach "$BASE_SHA"
+          git switch -c "$RELEASE_BRANCH"
+          git restore --source="$SOURCE_SHA" -- apps/studio/index.html apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css apps/studio/src/components/atlas/AppShell.tsx apps/studio/public/brand/atlas-orbital-star.png apps/studio/public/brand/atlas-ethereum-context.png
+          git add -- apps/studio/index.html apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css apps/studio/src/components/atlas/AppShell.tsx apps/studio/public/brand/atlas-orbital-star.png apps/studio/public/brand/atlas-ethereum-context.png
+          git diff --cached --check
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git commit -m "Integrate original ATLAS logo and image; polish Studio UI"
+          test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "Verified brand release: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
