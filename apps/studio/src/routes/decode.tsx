@@ -40,6 +40,8 @@ export const Route = createFileRoute("/decode")({
 const EXAMPLE =
   "0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000";
 
+const ARKIV_EXAMPLE = "0x9010d07c" + "0".repeat(128);
+
 type Explanation = Awaited<ReturnType<typeof atlasClient.explainCalldata>>;
 
 function Decoder() {
@@ -48,12 +50,14 @@ function Decoder() {
   const [result, setResult] = useState<ApiResult<DecodeCalldataResponse> | null>(null);
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [explainLoading, setExplainLoading] = useState(false);
-  const { sample } = useSampleMode();
+  const [illustration, setIllustration] = useState(false);
+  const { sample, setSample } = useSampleMode();
   const a = analyzeCalldata(raw);
 
   useEffect(() => {
     setResult(null);
     setExplanation(null);
+    setIllustration(false);
   }, [sample]);
 
   async function explain() {
@@ -66,6 +70,7 @@ function Decoder() {
       return;
     setExplainLoading(true);
     setExplanation(null);
+    setIllustration(false);
     try {
       setExplanation(await atlasClient.explainCalldata(a.normalized));
     } finally {
@@ -76,6 +81,7 @@ function Decoder() {
   async function run() {
     if (!a.ok) return;
     setExplanation(null);
+    setIllustration(false);
     if (sample) {
       const d = sampleDecode(a.selector, a.words);
       setResult(d.decoded.length ? { kind: "ok", data: d, sample: true } : { kind: "empty" });
