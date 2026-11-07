@@ -53,12 +53,14 @@ function useBackendState(): BackendState {
 
 function AtlasMark() {
   return (
-    <span
-      className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-mono text-[13px] font-bold text-primary-foreground shadow-surface"
+    <img
+      src="/brand/atlas-orbital-star.png"
+      alt=""
+      width={32}
+      height={32}
+      className="block size-8 shrink-0 rounded-lg bg-[#050509] object-cover shadow-surface"
       aria-hidden="true"
-    >
-      A
-    </span>
+    />
   );
 }
 
