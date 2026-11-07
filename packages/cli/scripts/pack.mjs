@@ -27,8 +27,7 @@ try {
   const manifest = {
     name,
     version: workspace.version,
-    description:
-      "ATLAS command-line tools for EVM signatures, transactions, and sponsor integrations",
+    description: "ATLAS CLI: live signature lookups, transaction tools, and developer diagnostics",
     type: "module",
     bin: { atlas: "./bin.js" },
     files: ["bin.js"],
@@ -76,9 +75,12 @@ process.exitCode = await run(process.argv.slice(2), { defaultApiUrl: ${JSON.stri
     if (output !== manifest.version)
       throw new Error(`Unexpected installed atlas version: ${output}`);
     const help = npm(fixture, "exec", "--no", "--", "atlas", "--help");
-    for (const command of ["lookup", "artifact", "ens-role", "explain", "integrations"]) {
+    for (const command of ["try", "lookup", "artifact", "ens-role", "explain", "integrations"]) {
       if (!help.includes(command)) throw new Error(`Installed atlas is missing ${command}.`);
     }
+    const demoHelp = npm(fixture, "exec", "--no", "--", "atlas", "try", "--help");
+    if (!demoHelp.includes("Arkiv-backed lookup"))
+      throw new Error("Packed CLI cannot run atlas try --help.");
   }
   await mkdir(destination, { recursive: true });
   const output = join(destination, packed.filename);
