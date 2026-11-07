@@ -59,8 +59,8 @@ function Workspace() {
             to: "/explorer" as const,
             icon: Search,
             title: "Signature Explorer",
-            body: "Look up a selector like 0xa9059cbb or a signature like transfer(address,uint256).",
-            hint: "0xa9059cbb",
+            body: "Search real Arkiv imports and separately labeled 4byte.directory community results.",
+            hint: "0x9010d07c · verified Arkiv example",
           },
           {
             to: "/decode" as const,
