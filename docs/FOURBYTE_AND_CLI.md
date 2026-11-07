@@ -31,6 +31,19 @@ corepack pnpm run dev
 
 The new `4byte` CLI command calls your ATLAS API (default http://localhost:3000); your API then reads 4byte.directory. `lookup` remains canonical Arkiv. For another deployed API, use `--api-url URL` before the subcommand or set `ATLAS_API_URL`.
 
+## Public npm quickstart
+
+```sh
+npm i -g @omghotekar/atlas-cli
+atlas lookup 0x9010d07c
+# Or without installing:
+npx -y @omghotekar/atlas-cli lookup 0x9010d07c
+```
+
+After the next 0.1.1 CLI release is published and verified, `atlas try`
+will run the same real lookup and reject missing/unsupported source evidence.
+Never advertise it as working on npm before that release.
+
 ## Demonstration sequence
 
 1. Use `atlas doctor` to show the true Arkiv health state (not implied by 4byte connectivity).

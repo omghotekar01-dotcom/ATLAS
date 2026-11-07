@@ -36,6 +36,16 @@ const lookup: FunctionLookupResult = FunctionLookupResultSchema.parse({
   warnings: [],
 });
 
+const DEMO_SELECTOR = "0x9010d07c";
+const demoLookup: FunctionLookupResult = FunctionLookupResultSchema.parse({
+  ...lookup,
+  identifier: DEMO_SELECTOR,
+  candidates: lookup.candidates.map((candidate) => ({
+    ...candidate,
+    signature: "getRoleMember(bytes32,uint256)",
+  })),
+});
+
 function fakeClient(overrides: Partial<CliClient> = {}): CliClient {
   const unexpected = async (): Promise<never> => {
     throw new Error("unexpected client call");
@@ -77,6 +87,67 @@ describe("atlas CLI", () => {
     const output = io.stdout.join("\n");
     expect(output).toContain(`Function selector ${SELECTOR}`);
     expect(output).toContain("transfer(address,uint256)");
+  });
+
+  it("offers a clear quickstart in atlas --help", async () => {
+    const io = capture();
+    const code = await run(["--help"], { client: fakeClient(), ...io.options });
+    expect(code).toBe(0);
+    expect(io.stdout.join("\n")).toContain("atlas try");
+    expect(io.stdout.join("\n")).toContain("npm i -g @omghotekar/atlas-cli");
+  });
+
+  it("runs atlas try against the real lookup client, without fixtures", async () => {
+    const io = capture();
+    const lookupFunction = vi.fn(async () => demoLookup);
+    const code = await run(["try"], {
+      client: fakeClient({ lookupFunction }),
+      ...io.options,
+    });
+    expect(code).toBe(0);
+    expect(lookupFunction).toHaveBeenCalledExactlyOnceWith(DEMO_SELECTOR);
+    expect(io.stdout.join("\n")).toContain("Live Arkiv Rabdi example");
+    expect(io.stdout.join("\n")).toContain("getRoleMember(bytes32,uint256)");
+  });
+
+  it("keeps atlas try --json machine-readable", async () => {
+    const io = capture();
+    const code = await run(["try", "--json"], {
+      client: fakeClient({ lookupFunction: async () => demoLookup }),
+      ...io.options,
+    });
+    expect(code).toBe(0);
+    expect(JSON.parse(io.stdout.join("\n")).identifier).toBe(DEMO_SELECTOR);
+  });
+
+  it("fails instead of inventing a verified record when the API has no match", async () => {
+    const io = capture();
+    const code = await run(["try"], {
+      client: fakeClient({
+        lookupFunction: async () => ({ ...demoLookup, candidates: [] }),
+      }),
+      ...io.options,
+    });
+    expect(code).toBe(1);
+    expect(io.stdout).toEqual([]);
+    expect(io.stderr.join("\n")).toContain("unavailable or missing source evidence");
+  });
+
+  it("reports real backend failures from atlas try", async () => {
+    const io = capture();
+    const code = await run(["try"], {
+      client: fakeClient({
+        lookupFunction: async () => {
+          throw new AtlasSdkError("UPSTREAM_UNAVAILABLE", "Arkiv unreachable", {
+            requestId: "req-live-demo",
+          });
+        },
+      }),
+      ...io.options,
+    });
+    expect(code).toBe(1);
+    expect(io.stdout).toEqual([]);
+    expect(io.stderr.join("\n")).toContain("req-live-demo");
   });
 
   it("prints JSON when asked", async () => {

@@ -32,10 +32,15 @@ Run the [ATLAS CLI on npm](https://www.npmjs.com/package/@omghotekar/atlas-cli)
 from any directory with Node.js 22.18 or newer:
 
 ```sh
-npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --timeout 45000 lookup 0x9010d07c --json
+# One command without installing:
+npx -y @omghotekar/atlas-cli lookup 0x9010d07c
+
+# Optional one-time installation:
+npm i -g @omghotekar/atlas-cli
+atlas lookup 0x9010d07c
 ```
 
-It uses the public ATLAS API by default. Use `--api-url` to query another deployment.
+The npm package runs the public ATLAS API by default. Use `--api-url` to query another deployment. The next 0.1.1 CLI release adds `atlas try`; publish and verify that release before advertising the new command as live.
 
 ## Local setup
 

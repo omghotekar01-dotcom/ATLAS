@@ -17,8 +17,7 @@ import { atlasClient } from "@/api/atlasClient";
 import { usePreferences, type ThemePref } from "@/lib/atlas/preferences";
 import "./landing.css";
 
-const CLI_COMMAND =
-  "npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --timeout 45000 lookup 0x9010d07c --json";
+const CLI_COMMAND = "npx -y @omghotekar/atlas-cli lookup 0x9010d07c";
 const API_LOOKUP = "/v1/functions/0x9010d07c";
 const SWARM_ROOT = "ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386";
 const SWARM_SHA = "0x67ec935b13fac924b07c7e98013c88f62ad7118f77361e6b93cb6cdeded949e4";
