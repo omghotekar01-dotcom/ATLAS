@@ -121,3 +121,41 @@ jobs:
           test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
           echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+
+  cli_ef_0g_formatted_attribution:
+    name: Release formatted CLI sponsor workflow under Om Ghotekar
+    needs: validate
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'feat/cli-0g-ef-formatted-release-20261107'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out reviewed source history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create author-correct release
+        env:
+          BASE_SHA: 232e81ad5fb8a4d3d118cbabd9eee21814d7c0a6
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_BRANCH: feat/cli-0g-ef-final-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git fetch --no-tags origin "$SOURCE_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          git switch --detach "$BASE_SHA"
+          git switch -c "$RELEASE_BRANCH"
+          git restore --source="$SOURCE_SHA" -- packages/cli/src/cli.ts packages/cli/src/workflow.ts packages/cli/src/workflow.test.ts apps/studio/src/routes/integrations.tsx apps/studio/src/routes/transactions.tsx apps/studio/src/routes/developers.tsx docs/CLI_SPONSOR_DEMO.md
+          git add -- packages/cli/src/cli.ts packages/cli/src/workflow.ts packages/cli/src/workflow.test.ts apps/studio/src/routes/integrations.tsx apps/studio/src/routes/transactions.tsx apps/studio/src/routes/developers.tsx docs/CLI_SPONSOR_DEMO.md
+          git diff --cached --check
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git commit -m "Ship ATLAS CLI workflow and 0G/EF demos"
+          test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          echo "Reviewed commit branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
