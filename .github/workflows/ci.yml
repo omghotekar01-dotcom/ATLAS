@@ -67,6 +67,23 @@ jobs:
             echo "Published formatting correction on $SOURCE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Normalize landing UI formatting in reviewed branch
+        if: github.event_name == 'pull_request' && github.head_ref == 'feat/landing-live-sponsor-showcase-20261107'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          git fetch --no-tags origin "$SOURCE_BRANCH"
+          git switch -C "$SOURCE_BRANCH" FETCH_HEAD
+          pnpm exec prettier --write apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git add -- apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "Normalize responsive sponsor-lab landing format"
+            git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+          fi
+
       - name: Formatting
         run: pnpm format:check
 
