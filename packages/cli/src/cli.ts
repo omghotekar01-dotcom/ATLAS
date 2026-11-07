@@ -187,6 +187,27 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     }
   };
 
+  const performInvestigation = async (
+    work: () => ReturnType<typeof investigate>,
+    json: boolean,
+    requireAllLive: boolean,
+    requireZeroG: boolean,
+  ): Promise<void> => {
+    try {
+      const report = await work();
+      stdout(json ? JSON.stringify(report, null, 2) : formatInvestigation(report));
+      if (requireAllLive && report.verified < 5) exitCode = 1;
+      if (
+        requireZeroG &&
+        !report.checks.some((check) =>
+          check.source.startsWith("0G Private Computer") && check.state === "verified"
+        )
+      ) exitCode = 1;
+    } catch (error) {
+      fail(error);
+    }
+  };
+
   program
     .name("atlas")
     .description("Investigate Ethereum calls: decode, verify Arkiv sources, Swarm evidence and ENSv2 permissions.")
@@ -236,14 +257,15 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
         fail(new UsageError("Choose only one of --0g-demo or --0g-live."));
         return;
       }
-      await perform(
+      await performInvestigation(
         () => investigate(clientFor(), input, {
           full: Boolean(o.full),
           community: o.community !== false,
           zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : (o["0gDemo"] ?? o.zeroGDemo) ? "illustration" : "none",
         }),
-        formatInvestigation,
         Boolean(o.json),
+        false,
+        Boolean(o["0gLive"] ?? o.zeroGLive),
       );
     });
 
@@ -254,14 +276,15 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     .option("--json", "print complete raw provenance and evidence JSON")
     .action(async (_opts: unknown, command: Command) => {
       const o = command.opts<{ "0gLive"?: boolean; zeroGLive?: boolean; json?: boolean }>();
-      await perform(
+      await performInvestigation(
         () => investigate(clientFor(), DEMO.calldata, {
           full: true,
           community: false,
           zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : "illustration",
         }),
-        formatInvestigation,
         Boolean(o.json),
+        true,
+        Boolean(o["0gLive"] ?? o.zeroGLive),
       );
     });
 
