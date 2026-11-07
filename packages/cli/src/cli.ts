@@ -232,7 +232,7 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
         full?: boolean; community?: boolean; "0gDemo"?: boolean;
         "0gLive"?: boolean; json?: boolean; zeroGDemo?: boolean; zeroGLive?: boolean;
       }>();
-      if (o.zeroGDemo && o.zeroGLive) {
+      if ((o["0gDemo"] ?? o.zeroGDemo) && (o["0gLive"] ?? o.zeroGLive)) {
         fail(new UsageError("Choose only one of --0g-demo or --0g-live."));
         return;
       }
@@ -240,7 +240,7 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
         () => investigate(clientFor(), input, {
           full: Boolean(o.full),
           community: o.community !== false,
-          zeroG: o.zeroGLive ? "real" : o.zeroGDemo ? "illustration" : "none",
+          zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : (o["0gDemo"] ?? o.zeroGDemo) ? "illustration" : "none",
         }),
         formatInvestigation,
         Boolean(o.json),
@@ -253,12 +253,12 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     .option("--0g-live", "use the real 0G server adapter instead of a labeled illustration")
     .option("--json", "print complete raw provenance and evidence JSON")
     .action(async (_opts: unknown, command: Command) => {
-      const o = command.opts<{ zeroGLive?: boolean; json?: boolean }>();
+      const o = command.opts<{ "0gLive"?: boolean; zeroGLive?: boolean; json?: boolean }>();
       await perform(
         () => investigate(clientFor(), DEMO.calldata, {
           full: true,
           community: false,
-          zeroG: o.zeroGLive ? "real" : "illustration",
+          zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : "illustration",
         }),
         formatInvestigation,
         Boolean(o.json),
