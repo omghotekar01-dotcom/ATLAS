@@ -141,7 +141,12 @@ export function SampleSwitch() {
   const { sample, setSample } = useSampleMode();
   return (
     <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground">
-      <span>Sample preview</span>
+      <span>
+        Sample preview:{" "}
+        <strong className={sample ? "text-warning" : "text-foreground"}>
+          {sample ? "ON" : "OFF"}
+        </strong>
+      </span>
       <button
         type="button"
         role="switch"

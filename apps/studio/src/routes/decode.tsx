@@ -40,6 +40,8 @@ export const Route = createFileRoute("/decode")({
 const EXAMPLE =
   "0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000";
 
+const ARKIV_EXAMPLE = "0x9010d07c" + "0".repeat(128);
+
 type Explanation = Awaited<ReturnType<typeof atlasClient.explainCalldata>>;
 
 function Decoder() {
@@ -48,12 +50,14 @@ function Decoder() {
   const [result, setResult] = useState<ApiResult<DecodeCalldataResponse> | null>(null);
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [explainLoading, setExplainLoading] = useState(false);
-  const { sample } = useSampleMode();
+  const [illustration, setIllustration] = useState(false);
+  const { sample, setSample } = useSampleMode();
   const a = analyzeCalldata(raw);
 
   useEffect(() => {
     setResult(null);
     setExplanation(null);
+    setIllustration(false);
   }, [sample]);
 
   async function explain() {
@@ -66,6 +70,7 @@ function Decoder() {
       return;
     setExplainLoading(true);
     setExplanation(null);
+    setIllustration(false);
     try {
       setExplanation(await atlasClient.explainCalldata(a.normalized));
     } finally {
@@ -76,6 +81,7 @@ function Decoder() {
   async function run() {
     if (!a.ok) return;
     setExplanation(null);
+    setIllustration(false);
     if (sample) {
       const d = sampleDecode(a.selector, a.words);
       setResult(d.decoded.length ? { kind: "ok", data: d, sample: true } : { kind: "empty" });
@@ -104,13 +110,33 @@ function Decoder() {
             <label htmlFor="cd" className="text-sm font-medium">
               Calldata
             </label>
-            <button
-              type="button"
-              onClick={() => setRaw(EXAMPLE)}
-              className="text-xs text-subtle hover:text-primary"
-            >
-              Insert example
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setRaw(ARKIV_EXAMPLE);
+                  setSample(false);
+                  setResult(null);
+                  setExplanation(null);
+                  setIllustration(false);
+                }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Load live Arkiv example
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRaw(EXAMPLE);
+                  setResult(null);
+                  setExplanation(null);
+                  setIllustration(false);
+                }}
+                className="text-xs text-subtle hover:text-primary"
+              >
+                ERC20 example (not imported)
+              </button>
+            </div>
           </div>
           <textarea
             id="cd"
@@ -119,6 +145,7 @@ function Decoder() {
               setRaw(e.target.value);
               setResult(null);
               setExplanation(null);
+              setIllustration(false);
             }}
             rows={8}
             spellCheck={false}
@@ -182,7 +209,80 @@ function Decoder() {
         </Panel>
       </div>
 
+      <Panel className="mt-5 border-primary/20">
+        <h2 className="text-base font-semibold">0G Private Computer · Evidence explainer</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Start with the live Arkiv example above and press Decode. Compare a local illustrative
+          explanation with a real private 0G model request. Real inference requires the server-side
+          0G key, supported model, credits and a provider request ID.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              setRaw(ARKIV_EXAMPLE);
+              setSample(false);
+              setResult(null);
+              setExplanation(null);
+              setIllustration(false);
+            }}
+          >
+            1. Load live Arkiv example
+          </Button>
+          <Button
+            variant="outline"
+            type="button"
+            disabled={
+              sample ||
+              result?.kind !== "ok" ||
+              !result.data.decoded.some((item) => item.decodeStatus === "success")
+            }
+            onClick={() => {
+              setIllustration(true);
+              setExplanation(null);
+            }}
+          >
+            2. Preview local illustration
+          </Button>
+          <Button
+            type="button"
+            disabled={
+              sample ||
+              result?.kind !== "ok" ||
+              !result.data.decoded.some((item) => item.decodeStatus === "success") ||
+              explainLoading
+            }
+            onClick={() => void explain()}
+          >
+            {explainLoading ? "Calling 0G…" : "3. Request REAL 0G inference"}
+          </Button>
+        </div>
+        <p className="mt-3 text-xs text-warning">
+          Local illustration never calls 0G and never produces a provider request ID. It is a
+          product demonstration, not sponsor qualification evidence.
+        </p>
+      </Panel>
+
       <div className="mt-6 space-y-4" aria-live="polite">
+        {illustration && result?.kind === "ok" && (
+          <Panel className="border-warning/30">
+            <Pill tone="warning">LOCAL ILLUSTRATION · NOT 0G INFERENCE</Pill>
+            <h2 className="mt-3 font-semibold">Evidence-grounded explanation preview</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              The canonical ABI signature{" "}
+              {result.data.decoded.find((item) => item.decodeStatus === "success")?.signature ??
+                "unknown"}
+              describes the function input fields. This deterministic decode cannot establish the
+              return value, transaction success, authorization or contract safety. The signature's
+              source provenance belongs to the Arkiv record; checking its source is separate from
+              predicting behavior.
+            </p>
+            <p className="mt-2 text-xs text-warning">
+              Provider: none · Request ID: none · AI requests sent: 0
+            </p>
+          </Panel>
+        )}
         {explanation && explanation.kind !== "ok" && <ResultState result={explanation} />}
         {explanation?.kind === "ok" && (
           <Panel>
