@@ -43,7 +43,7 @@ describe("ATLAS integrated CLI workflow", () => {
     expect(result.verified).toBe(5);
     expect(result.checks.filter((e) => e.state === "illustrative")).toHaveLength(1);
     expect(result.checks.find((e) => e.source.includes("Anon-RPC"))?.state).toBe("unverified");
-    expect(result.checks.find((e) => e.source.includes("LOCAL"))?.message).toContain("Request ID: none");
+    expect(result.checks.find((e) => e.state === "illustrative")?.message).toContain("Request ID: none");
   });
 
   it("never upgrades a community guess into an Arkiv source", async () => {
