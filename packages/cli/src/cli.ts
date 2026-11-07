@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { DEMO, investigate, formatInvestigation } from "./workflow.js";
 import { Command, CommanderError } from "commander";
-import { AtlasSdkError, AtlasClient, DEFAULT_BASE_URL, type AtlasClientOptions } from "@atlas/sdk";
+import { AtlasSdkError, AtlasClient, type AtlasClientOptions } from "@atlas/sdk";
 import {
   LogInputSchema,
   type CalldataDecodeResult,
