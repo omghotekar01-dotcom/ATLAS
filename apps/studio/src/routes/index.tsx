@@ -72,8 +72,13 @@ function Logo({ dark = false }: { dark?: boolean }) {
   return (
     <span className={"atlas-wordmark" + (dark ? " atlas-wordmark-inverse" : "")}>
       <span className="atlas-logo-mark" aria-hidden="true">
-        <span>A</span>
-        <i />
+        <img
+          src="/brand/atlas-orbital-star.png"
+          alt=""
+          className="atlas-brand-image"
+          width={46}
+          height={46}
+        />
       </span>
       <span>ATLAS</span>
     </span>
@@ -407,6 +412,32 @@ function Landing() {
           </section>
         </div>
 
+        <section className="atlas-visual-story" aria-labelledby="atlas-visual-title">
+          <div className="atlas-visual-story-heading">
+            <div>
+              <span className="atlas-section-eyebrow">BUILT FOR ETHEREUM DEVELOPERS</span>
+              <h2 id="atlas-visual-title">A clearer view of on-chain interactions.</h2>
+            </div>
+            <Link to="/studio" className="atlas-inline-link">
+              Open the working Studio <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <figure className="atlas-visual-story-figure">
+            <img
+              src="/brand/atlas-ethereum-context.png"
+              alt="ATLAS project artwork: a developer studying Ethereum function signatures, calldata decoding, transactions and API or SDK tools on a monitor."
+              width={1672}
+              height={941}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>
+              Illustrative project artwork. Explore the actual tools and verified data inside ATLAS
+              Studio.
+            </figcaption>
+          </figure>
+        </section>
+
         <section id="live-demo" className="atlas-quick-guide" aria-labelledby="atlas-quick-title">
           <div className="atlas-guide-header">
             <div>
@@ -669,6 +700,13 @@ export const Route = createFileRoute("/")({
           "Search contract signatures, decode calldata, inspect transactions, and trace source provenance with ATLAS Studio, CLI, API and SDK.",
       },
       { property: "og:title", content: "ATLAS — Ethereum, decoded. With receipts." },
+      {
+        property: "og:image",
+        content: "https://atlas-ethglobal.vercel.app/brand/atlas-ethereum-context.png",
+      },
+      { property: "og:image:width", content: "1672" },
+      { property: "og:image:height", content: "941" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:
