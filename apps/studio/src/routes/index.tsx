@@ -83,8 +83,14 @@ function Logo({ dark = false }: { dark?: boolean }) {
   return (
     <span className={"atlas-wordmark" + (dark ? " atlas-wordmark-inverse" : "")}>
       <span className="atlas-logo-mark" aria-hidden="true">
-        <span>A</span>
-        <i />
+        <img
+          src="/brand/atlas-orbital-star.png"
+          className="atlas-brand-image"
+          width={40}
+          height={40}
+          alt=""
+          decoding="async"
+        />
       </span>
       <span>ATLAS</span>
     </span>
@@ -341,7 +347,7 @@ function Landing() {
     { label: "Studio", to: "/studio" as const },
     { label: "CLI", to: "/developers" as const },
     { label: "API", to: "/docs" as const },
-    { label: "Docs", to: "/docs" as const },
+    { label: "Integrations", to: "/integrations" as const },
   ];
 
   return (
@@ -524,6 +530,40 @@ function Landing() {
             </div>
           </section>
         </div>
+
+
+        <section className="atlas-context-story" aria-labelledby="atlas-context-title">
+          <div className="atlas-context-copy">
+            <span className="atlas-section-eyebrow">THE CONTEXT BEHIND THE CALL</span>
+            <h2 id="atlas-context-title">A clearer view of Ethereum interactions.</h2>
+            <p>
+              A selector tells you very little on its own. ATLAS connects decoded calls to
+              the source record and supporting evidence, so you can inspect what is known
+              and what still needs checking.
+            </p>
+            <div className="atlas-context-tags" aria-label="ATLAS capabilities">
+              <span>Source-aware lookups</span>
+              <span>Readable calldata</span>
+              <span>Evidence receipts</span>
+            </div>
+            <Link to="/studio" className="atlas-context-link">
+              Work in the Studio <ArrowUpRight size={16} />
+            </Link>
+          </div>
+          <figure className="atlas-context-photo">
+            <img
+              src="/brand/atlas-ethereum-context.png"
+              alt="Illustration of a developer reviewing code and Ethereum data at a workstation."
+              width={1672}
+              height={941}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>
+              Illustrative artwork. ATLAS proof cards use real API responses.
+            </figcaption>
+          </figure>
+        </section>
 
         <section id="live-demo" className="atlas-quick-guide" aria-labelledby="atlas-quick-title">
           <div className="atlas-guide-header">
@@ -722,6 +762,14 @@ function Landing() {
                           : "MODEL RESPONSE — REQUEST ID MISSING"}
                     </span>
                     <code>{zeroGShowcase.signature}</code>
+                    <ul className="atlas-lab-arguments" aria-label="Decoded calldata arguments">
+                      {zeroGShowcase.arguments.map((value, index) => (
+                        <li key={index} title={value}>
+                          <span>ARG {index + 1}</span>
+                          <code>{value}</code>
+                        </li>
+                      ))}
+                    </ul>
                     <p>{zeroGShowcase.summary}</p>
                     <small>
                       {zeroGShowcase.mode === "live"
@@ -1022,6 +1070,17 @@ export const Route = createFileRoute("/")({
           "Search contract signatures, decode calldata, inspect transactions, and trace source provenance with ATLAS Studio, CLI, API and SDK.",
       },
       { property: "og:title", content: "ATLAS — Ethereum, decoded. With receipts." },
+      {
+        property: "og:image",
+        content: "https://atlas-ethglobal.vercel.app/brand/atlas-ethereum-context.png",
+      },
+      { property: "og:image:width", content: "1672" },
+      { property: "og:image:height", content: "941" },
+      { property: "og:image:alt", content: "ATLAS Ethereum developer intelligence illustration" },
+      {
+        name: "twitter:image",
+        content: "https://atlas-ethglobal.vercel.app/brand/atlas-ethereum-context.png",
+      },
       {
         property: "og:description",
         content:
