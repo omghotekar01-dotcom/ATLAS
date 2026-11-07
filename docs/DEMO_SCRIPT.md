@@ -1,47 +1,17 @@
-# ATLAS — short, proof-first live demo
+# ATLAS — 90-second live proof video
 
-Target length: approximately 2–3 minutes. Speak live using your own voice;
-do not claim that unimported data or unshipped features are live.
+Open https://atlas-ethglobal.vercel.app/demo and press **Run the live demo**. All four checks call the current API, and successes are not prefilled.
 
-**0:00–0:20 — The problem.** "An Ethereum transaction carries opaque
-selectors and event topic hashes. A signature catalogue can tell you a
-meaning, but how do you verify where that answer came from?"
+**0:00–0:15.** Problem: opaque 4-byte selectors reveal little without source provenance.
 
-**0:20–0:45 — Our solution.** "ATLAS extracts declarations from pinned
-licensed first-party Solidity source and stores their selectors, signatures
-and source-level provenance as wallet-created Arkiv Rabdi entities with
-expiration and indexed filters."
+**0:15–0:35.** Arkiv: live canonical getRoleMember(bytes32,uint256) record, creator wallet, source and on-chain entity.
 
-**0:45–1:15 — Live proof.** Open
-`https://atlas-api-ivory.vercel.app/v1/functions/0x9010d07c`.
-Point to `getRoleMember(bytes32,uint256)`, the source commit, entity key,
-record hash and `registry:"arkiv-rabdi"`. Open the matching
-[real transaction](https://rabdi.explorer.arkiv.network/tx/0x0ddf2304bc90eacf5430c0d253cf8560f7b3dbbbf62f58f77c7b8a7347623594)
-and show its success.
+**0:35–0:55.** Swarm: six verified chunks contain 3,892 extracted function/event declarations. Show the pinned root and matching SHA-256. These are NOT 3,892 Arkiv entities. Swarm-Arkiv link: https://rabdi.explorer.arkiv.network/tx/0x2fabf43c602c6693b40dbba5bd75f436050ad82baf6753036620f98df65631a7
 
-**1:15–1:50 — Studio.** Once the hosted site is deployed, open Explorer and
-enter `0x9010d07c`. Show a real result. Toggle the sample-preview switch and
-explain that preview content is explicitly labeled. Open Decoder or
-Transaction Lab to explain the real APIs, but do not pretend unknown selectors
-are resolved.
+**0:55–1:15.** ENSv2: Sepolia granted and denied real EAC registrar permissions. Emphasize that ENS role proof does not bind the account to the ABI author.
 
-**1:50–2:15 — Safety and architecture.** Show `/arkiv/schema.md`, the import
-script and its `ATLAS_WRITE_APPROVAL` gate, the explicit creator filter and
-the 180-day expiry. Explain read-back verification and that the API does not
-carry a signing private key.
+**1:15–1:30.** Show /studio, the CLI/SDK/API access, and public GitHub. State what is working and what is not yet integrated (0G, default Anon-RPC, full Arkiv bulk import).
 
-**2:15–2:40 — Truthful scope and next.** "We have proven one live entity.
-Our offline source pipeline finds 3,787 distinct signatures, and the next
-steps are approved bulk imports, event writes and refresh automation."
+Record a video under three minutes, verify the live site and upload the video yourself through the ETHGlobal dashboard. No upload is claimed here.
 
-## Fallback if Studio is unavailable
-
-Present the production API, GitHub source/test evidence and Rabdi transaction.
-Never represent a fixture screenshot as an Arkiv-backed live result.
-
-## Recording checklist for the current evidence
-
-1. Open the public API health and canonical lookup for `0x9010d07c`. Show the matching function and Arkiv provenance, then open the Rabdi receipt linked in [live proof](arkiv-live-proof.md).
-2. In Studio, demonstrate the canonical decode workflow. Label local samples and any unverified community suggestions on screen.
-3. Show a sponsor flow only after its real evidence has been captured. Read the reference, request ID or block on screen and explain what it establishes.
-4. Record narration and the tested deployment URLs. The team uploads the demo and submits through the Hacker Dashboard.
+See [judge quickstart](JUDGE_QUICKSTART.md) and [official sponsor criteria](https://ethglobal.com/events/mumbai/prizes).

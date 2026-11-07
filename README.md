@@ -2,24 +2,25 @@
 
 ATLAS helps developers identify, decode, and investigate EVM contract interactions with a provenance-aware signature registry mirrored to Arkiv.
 
-## Status
+## Start here — judge quickstart
 
-The local vertical slice is implemented and tested: shared contracts, a
-provenance-aware importer, the Arkiv adapter, core lookup/decode logic, a chain
-reader, a Fastify REST API, a typed SDK, a CLI, and the ten-route Studio.
-Event Inspector and Transaction Lab now call the API, and Explorer/Decoder use
-the same contracts.
+- Live landing: https://atlas-ethglobal.vercel.app/
+- **One-click live proof:** https://atlas-ethglobal.vercel.app/demo
+- Studio: https://atlas-ethglobal.vercel.app/studio
+- Canonical Arkiv function lookup: https://atlas-ethglobal.vercel.app/v1/functions/0x9010d07c
+- Sponsor permissions: https://atlas-ethglobal.vercel.app/integrations
+- Proof-first video guide: [Judge quickstart](docs/JUDGE_QUICKSTART.md)
 
-One real OpenZeppelin function record has been written to Arkiv Rabdi, read
-back, and confirmed through the API and Studio. This is **one record only**, not
-a full source import. Event signatures are not written, and no contract or
-dataset has been deployed; only that single record is published to Arkiv. The
-API's Vercel entry-point collision is addressed in source; production readiness
-still requires the live routing checks in the deployment guide. See
-[docs/arkiv-live-proof.md](docs/arkiv-live-proof.md),
-[docs/implementation-status.md](docs/implementation-status.md), and
-[docs/production-readiness.md](docs/production-readiness.md) for evidence and
-open gates.
+## Verified technical scope — November 7, 2026
+
+ATLAS is an Ethereum developer-intelligence tool for selector lookup, decoding, transaction investigation and source provenance. It provides a browser Studio, published CLI, typed SDK and REST API.
+
+- **Arkiv Rabdi:** one real canonical ABI function entity written, read back and wallet-attributed. Not 3,892 individually imported entities.
+- **Swarm:** 3,892 extracted function/event declarations (3,155 functions and 737 events) split into six uploaded, SHA-verified chunks plus a verified root manifest. Root: ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386. Linked to Arkiv in [this on-chain transaction](https://rabdi.explorer.arkiv.network/tx/0x2fabf43c602c6693b40dbba5bd75f436050ad82baf6753036620f98df65631a7).
+- **ENSv2 Sepolia:** real Enhanced Access Control granted/denied registrar role reads. Registry permissions do **not** prove that the account authored or signed the ABI.
+- **0G:** no verified live Private Computer inference request ID yet.
+- **EF Anon-RPC:** browser-only exploration; not yet the default transport for all app RPC reads.
+- **Production:** public landing at /, original workspace at /studio, and a guided read-only demo at /demo. Its four result states are validated against real API responses—not hardcoded successes.
 
 ## Requirements
 
@@ -134,6 +135,6 @@ See [4byte documentation](docs/FOURBYTE_AND_CLI.md).
 
 ## Sponsor release and verification
 
-See the [sponsor readiness matrix](docs/SPONSOR_READINESS.md), [build and test commands](docs/TESTING.md), and [deployment checklist](docs/DEPLOYMENT.md). Studio exposes ten pages, including Developers, Integrations and Settings.
+See the [sponsor readiness matrix](docs/SPONSOR_READINESS.md), [build and test commands](docs/TESTING.md), and [deployment checklist](docs/DEPLOYMENT.md). Studio includes a public landing, a one-click guided demo and the original developer workspace.
 
 The [ATLAS CLI guide](packages/cli/README.md) covers npm archive installation, release packaging, and sponsor commands.

@@ -1,6 +1,6 @@
 # ATLAS — ETHGlobal Mumbai submission package
 
-**Proposed prize:** Arkiv — **Mirror something Ethereum depends on**.
+**Primary prize focus:** Arkiv mirror-source utility, Arkiv–Swarm evidence, and separate ENSv2 live EAC evidence. Verify the exact qualifying sponsor tracks in the event dashboard.
 Official requirements: https://ethglobal.com/events/mumbai/prizes
 
 ## 30-second pitch
@@ -12,9 +12,16 @@ the original Git commit, source path, deterministic record hash and wallet-
 attributed Arkiv entity key. ATLAS also provides decoding and investigation
 tools, a typed SDK, a CLI and an iOS-inspired seven-page Studio.
 
-## Verifiable facts
+## Verifiable facts — latest evidence
 
-- Source repo: https://github.com/omghotekar01-dotcom/ATLAS
+- Public source repo: https://github.com/omghotekar01-dotcom/ATLAS
+- Landing: https://atlas-ethglobal.vercel.app/
+- Guided live demo: https://atlas-ethglobal.vercel.app/demo
+- Studio: https://atlas-ethglobal.vercel.app/studio
+- ENSv2 real role reads: https://atlas-ethglobal.vercel.app/integrations
+- Swarm root: ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386
+- Swarm–Arkiv link: https://rabdi.explorer.arkiv.network/tx/0x2fabf43c602c6693b40dbba5bd75f436050ad82baf6753036620f98df65631a7
+- Swarm archive: six SHA-verified chunks, 3,892 extracted declarations; these are NOT Arkiv entity counts.
 - Backend: https://atlas-api-ivory.vercel.app
 - Health: https://atlas-api-ivory.vercel.app/health
 - Canonical lookup:
@@ -60,12 +67,12 @@ Do not run `import --confirm-write` without a separately approved write plan.
 
 ## Missing gates before pressing Submit
 
-- [ ] GitHub repo made **public** after a security review (currently private).
+- [x] GitHub repository public; MIT license present.
 - [x] Root open-source [MIT license](../LICENSE) included in source.
 - [x] Wallet and reproducible query documented.
 - [x] Required Arkiv rubric files created.
 - [x] SDK integration and one real Rabdi write/read-back proven.
-- [ ] Studio deployed and all ten routes/browser API calls tested.
+- [x] Studio and landing deployed; guided proof route added, awaiting current release checks.
 - [ ] Live dataset coverage expanded with separately approved writes
       (strongly recommended, **not a qualification requirement for one record**).
 - [ ] Event-write path tested and event entities imported (recommended).
