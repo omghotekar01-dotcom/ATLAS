@@ -40,14 +40,15 @@ export async function investigate(
   const checks: Evidence[] = [];
   const canonical = await client.lookupFunction(selector);
   const candidates = canonical.candidates;
-  const validCanonical = canonical.registry === "arkiv-rabdi" &&
+  const validCanonical =
+    canonical.registry === "arkiv-rabdi" &&
     candidates.some((c) => Boolean(c.entityKey) && Boolean(c.provenance.recordHash));
   checks.push({
     source: "Arkiv Rabdi · canonical signatures",
     state: validCanonical ? "verified" : "unavailable",
-    message: validCanonical ?
-      candidates.map((c) => `${c.signature} · entity ${c.entityKey}`).join("; ") :
-      "No provenance-backed Arkiv match. No fake database record was supplied.",
+    message: validCanonical
+      ? candidates.map((c) => `${c.signature} · entity ${c.entityKey}`).join("; ")
+      : "No provenance-backed Arkiv match. No fake database record was supplied.",
     data: canonical,
   });
 
@@ -61,7 +62,7 @@ export async function investigate(
         data: hints,
       });
     } catch (error) {
-      checks.push({source: "4byte.directory", state: "unavailable", message: String(error)});
+      checks.push({ source: "4byte.directory", state: "unavailable", message: String(error) });
     }
   }
 
@@ -72,13 +73,17 @@ export async function investigate(
       checks.push({
         source: "ATLAS · deterministic calldata decoding",
         state: successes.length && validCanonical ? "verified" : "unavailable",
-        message: successes.length ?
-          `${successes.map((d) => d.signature).join(", ")}; ${successes.reduce((n, d) => n + d.arguments.length, 0)} argument(s).` :
-          "The canonical registry cannot decode this calldata.",
+        message: successes.length
+          ? `${successes.map((d) => d.signature).join(", ")}; ${successes.reduce((n, d) => n + d.arguments.length, 0)} argument(s).`
+          : "The canonical registry cannot decode this calldata.",
         data: decoded,
       });
     } catch (error) {
-      checks.push({source: "ATLAS calldata decoder", state: "unavailable", message: String(error)});
+      checks.push({
+        source: "ATLAS calldata decoder",
+        state: "unavailable",
+        message: String(error),
+      });
     }
   }
 
@@ -90,11 +95,13 @@ export async function investigate(
         checks.push({
           source: "Swarm · actual manifest bytes and SHA-256",
           state: matches ? "verified" : "unavailable",
-          message: matches ? `Digest matched: ${a.sha256}; size ${a.bytes} bytes.` : "Digest mismatch; no Swarm proof claimed.",
+          message: matches
+            ? `Digest matched: ${a.sha256}; size ${a.bytes} bytes.`
+            : "Digest mismatch; no Swarm proof claimed.",
           data: { reference: a.reference, sha256: a.sha256, bytes: a.bytes },
         });
       } catch (e) {
-        checks.push({source: "Swarm", state: "unavailable", message: String(e)});
+        checks.push({ source: "Swarm", state: "unavailable", message: String(e) });
       }
     }
     for (const row of [
@@ -102,21 +109,30 @@ export async function investigate(
       { account: DEMO.ensNo, expectation: false, label: "ENSv2 EAC denied" },
     ]) {
       if (!client.checkEnsV2Role) {
-        checks.push({source: row.label, state: "unavailable", message: "ENSv2 adapter unavailable."});
+        checks.push({
+          source: row.label,
+          state: "unavailable",
+          message: "ENSv2 adapter unavailable.",
+        });
         continue;
       }
       try {
         const a = await client.checkEnsV2Role(row.account, { resource: "0", role: "1" });
-        const ok = a.chainId === 11155111 && a.resource === "0" &&
-          a.requiredRoles === "1" && a.authorized === row.expectation;
+        const ok =
+          a.chainId === 11155111 &&
+          a.resource === "0" &&
+          a.requiredRoles === "1" &&
+          a.authorized === row.expectation;
         checks.push({
           source: row.label,
           state: ok ? "verified" : "unavailable",
-          message: ok ? `Actual authorized=${a.authorized} at Sepolia block ${a.blockNumber}.` : "Expected permission check did not match.",
+          message: ok
+            ? `Actual authorized=${a.authorized} at Sepolia block ${a.blockNumber}.`
+            : "Expected permission check did not match.",
           data: { account: a.account, authorized: a.authorized, blockNumber: a.blockNumber },
         });
       } catch (e) {
-        checks.push({source: row.label, state: "unavailable", message: String(e)});
+        checks.push({ source: row.label, state: "unavailable", message: String(e) });
       }
     }
   }
@@ -129,7 +145,11 @@ export async function investigate(
     });
   } else if (opts.zeroG === "real") {
     if (!isCalldata || !client.explainCalldata) {
-      checks.push({source: "0G Private Computer", state: "unavailable", message: "Real inference requires canonical calldata and server credentials."});
+      checks.push({
+        source: "0G Private Computer",
+        state: "unavailable",
+        message: "Real inference requires canonical calldata and server credentials.",
+      });
     } else {
       try {
         const a = await client.explainCalldata(input);
@@ -137,11 +157,13 @@ export async function investigate(
         checks.push({
           source: "0G Private Computer · real API inference",
           state: complete ? "verified" : "unverified",
-          message: complete ? `Model ${a.model}; genuine provider request ID ${a.requestId}.` : "No provider request ID returned; do not claim 0G proof.",
+          message: complete
+            ? `Model ${a.model}; genuine provider request ID ${a.requestId}.`
+            : "No provider request ID returned; do not claim 0G proof.",
           data: a,
         });
       } catch (e) {
-        checks.push({source: "0G Private Computer", state: "unavailable", message: String(e)});
+        checks.push({ source: "0G Private Computer", state: "unavailable", message: String(e) });
       }
     }
   }
@@ -150,13 +172,19 @@ export async function investigate(
     checks.push({
       source: "Ethereum Foundation Anon-RPC · browser Nym worker",
       state: "unverified",
-      message: "Real worker runs in Studio /integrations, not in this Node CLI. No Anon-RPC request was made by CLI; app-wide default anonymous routing is not implemented.",
+      message:
+        "Real worker runs in Studio /integrations, not in this Node CLI. No Anon-RPC request was made by CLI; app-wide default anonymous routing is not implemented.",
     });
   }
   return {
-    input, selector, kind: isCalldata ? "calldata" : "selector", checks,
+    input,
+    selector,
+    kind: isCalldata ? "calldata" : "selector",
+    checks,
     verified: checks.filter((c) => c.state === "verified").length,
-    warnings: ["A matched selector is not proof of contract identity, ABI ownership, successful execution or safety."],
+    warnings: [
+      "A matched selector is not proof of contract identity, ABI ownership, successful execution or safety.",
+    ],
   };
 }
 
@@ -165,7 +193,13 @@ export function formatInvestigation(report: Investigation): string {
     "ATLAS · Actual Ethereum interaction analysis",
     `Input: ${report.input}`,
     `Selector: ${report.selector} (${report.kind})`,
-    ...report.checks.flatMap((c, i) => ["", `${i + 1}. [${c.state.toUpperCase()}] ${c.source}`, `   ${c.message}`]),
-    "", `${report.verified} verified read(s).`, ...report.warnings,
+    ...report.checks.flatMap((c, i) => [
+      "",
+      `${i + 1}. [${c.state.toUpperCase()}] ${c.source}`,
+      `   ${c.message}`,
+    ]),
+    "",
+    `${report.verified} verified read(s).`,
+    ...report.warnings,
   ].join("\n");
 }

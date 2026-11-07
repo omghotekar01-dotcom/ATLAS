@@ -40,7 +40,9 @@ function Integrations() {
       setAnonLoading(false);
     }
   }
-  const [swarmReference, setSwarmReference] = useState("ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386");
+  const [swarmReference, setSwarmReference] = useState(
+    "ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386",
+  );
   const [swarmResult, setSwarmResult] = useState<Artifact | null>(null);
   const [swarmLoading, setSwarmLoading] = useState(false);
   async function readSwarm() {
@@ -136,10 +138,10 @@ function Integrations() {
         <Panel>
           <h2 className="text-base font-semibold">Ethereum Foundation Anon-RPC · Nym</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Real Nym browser-harness worker. One click attempts a public Ethereum block read
-            through the Nym transport; the specifier bootstrap is direct, and there is no
-            fallback if Nym fails. Public demo RPC URLs are prefilled and editable. No API keys
-            or wallet secrets are needed.
+            Real Nym browser-harness worker. One click attempts a public Ethereum block read through
+            the Nym transport; the specifier bootstrap is direct, and there is no fallback if Nym
+            fails. Public demo RPC URLs are prefilled and editable. No API keys or wallet secrets
+            are needed.
           </p>
           <form
             className="mt-3 space-y-2"
@@ -176,7 +178,10 @@ function Integrations() {
               {anonLoading ? "Attempting genuine Nym read…" : "Run one-click LIVE Anon-RPC check"}
             </button>
           </form>
-          <p className="mt-3 text-xs text-muted-foreground">Default demo RPC: {PUBLIC_ETHEREUM_RPC}. A successful result counts as one real browser-harness Nym read, not proof that all ATLAS API reads are anonymous.</p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Default demo RPC: {PUBLIC_ETHEREUM_RPC}. A successful result counts as one real
+            browser-harness Nym read, not proof that all ATLAS API reads are anonymous.
+          </p>
           {anonProof && (
             <p role="status" className="mt-3 text-xs">
               Nym worker returned Ethereum block {anonProof.blockNumber}. {anonProof.warning}
@@ -194,9 +199,13 @@ function Integrations() {
         <p className="mt-2 text-sm text-muted-foreground">
           ATLAS has an actual server-backed private-inference adapter, but it needs a valid 0G key,
           model and credits configured on the server. Without them, Decoder offers a deterministic
-          explanation preview clearly marked NOT 0G, without fabricating a model response or request ID.
+          explanation preview clearly marked NOT 0G, without fabricating a model response or request
+          ID.
         </p>
-        <Link to="/decode" className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline">
+        <Link
+          to="/decode"
+          className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline"
+        >
           Open 0G evidence explainer demo →
         </Link>
       </Panel>

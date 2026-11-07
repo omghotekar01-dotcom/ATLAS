@@ -199,10 +199,11 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
       if (requireAllLive && report.verified < 5) exitCode = 1;
       if (
         requireZeroG &&
-        !report.checks.some((check) =>
-          check.source.startsWith("0G Private Computer") && check.state === "verified"
+        !report.checks.some(
+          (check) => check.source.startsWith("0G Private Computer") && check.state === "verified",
         )
-      ) exitCode = 1;
+      )
+        exitCode = 1;
     } catch (error) {
       fail(error);
     }
@@ -210,7 +211,9 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
 
   program
     .name("atlas")
-    .description("Investigate Ethereum calls: decode, verify Arkiv sources, Swarm evidence and ENSv2 permissions.")
+    .description(
+      "Investigate Ethereum calls: decode, verify Arkiv sources, Swarm evidence and ENSv2 permissions.",
+    )
     .version(CLI_VERSION)
     .option("--api-url <url>", "ATLAS API base URL (defaults to ATLAS_API_URL)")
     .option("--timeout <ms>", "request timeout in milliseconds (default: 45000)", "45000")
@@ -242,7 +245,9 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
   program
     .command("inspect")
     .argument("[input]", "4-byte selector or complete ABI-aligned calldata", DEMO.selector)
-    .description("Run the core ATLAS investigation: canonical lookup, provenance, optional decode and evidence")
+    .description(
+      "Run the core ATLAS investigation: canonical lookup, provenance, optional decode and evidence",
+    )
     .option("--full", "also verify real Swarm root and ENSv2 on-chain permission reads")
     .option("--no-community", "skip unverified public 4byte.directory comparisons")
     .option("--0g-demo", "add clearly labeled deterministic local illustration (no AI call)")
@@ -250,19 +255,30 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     .option("--json", "print structured evidence, states and source records")
     .action(async (input: string, _opts: unknown, command: Command) => {
       const o = command.opts<{
-        full?: boolean; community?: boolean; "0gDemo"?: boolean;
-        "0gLive"?: boolean; json?: boolean; zeroGDemo?: boolean; zeroGLive?: boolean;
+        full?: boolean;
+        community?: boolean;
+        "0gDemo"?: boolean;
+        "0gLive"?: boolean;
+        json?: boolean;
+        zeroGDemo?: boolean;
+        zeroGLive?: boolean;
       }>();
       if ((o["0gDemo"] ?? o.zeroGDemo) && (o["0gLive"] ?? o.zeroGLive)) {
         fail(new UsageError("Choose only one of --0g-demo or --0g-live."));
         return;
       }
       await performInvestigation(
-        () => investigate(clientFor(), input, {
-          full: Boolean(o.full),
-          community: o.community !== false,
-          zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : (o["0gDemo"] ?? o.zeroGDemo) ? "illustration" : "none",
-        }),
+        () =>
+          investigate(clientFor(), input, {
+            full: Boolean(o.full),
+            community: o.community !== false,
+            zeroG:
+              (o["0gLive"] ?? o.zeroGLive)
+                ? "real"
+                : (o["0gDemo"] ?? o.zeroGDemo)
+                  ? "illustration"
+                  : "none",
+          }),
         Boolean(o.json),
         false,
         Boolean(o["0gLive"] ?? o.zeroGLive),
@@ -271,17 +287,20 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
 
   program
     .command("demo")
-    .description("One-command real ATLAS workflow: Arkiv decode, Swarm digest, ENSv2 checks, 0G-style local preview")
+    .description(
+      "One-command real ATLAS workflow: Arkiv decode, Swarm digest, ENSv2 checks, 0G-style local preview",
+    )
     .option("--0g-live", "use the real 0G server adapter instead of a labeled illustration")
     .option("--json", "print complete raw provenance and evidence JSON")
     .action(async (_opts: unknown, command: Command) => {
       const o = command.opts<{ "0gLive"?: boolean; zeroGLive?: boolean; json?: boolean }>();
       await performInvestigation(
-        () => investigate(clientFor(), DEMO.calldata, {
-          full: true,
-          community: false,
-          zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : "illustration",
-        }),
+        () =>
+          investigate(clientFor(), DEMO.calldata, {
+            full: true,
+            community: false,
+            zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : "illustration",
+          }),
         Boolean(o.json),
         true,
         Boolean(o["0gLive"] ?? o.zeroGLive),
