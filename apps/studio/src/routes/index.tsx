@@ -531,15 +531,14 @@ function Landing() {
           </section>
         </div>
 
-
         <section className="atlas-context-story" aria-labelledby="atlas-context-title">
           <div className="atlas-context-copy">
             <span className="atlas-section-eyebrow">THE CONTEXT BEHIND THE CALL</span>
             <h2 id="atlas-context-title">A clearer view of Ethereum interactions.</h2>
             <p>
-              A selector tells you very little on its own. ATLAS connects decoded calls to
-              the source record and supporting evidence, so you can inspect what is known
-              and what still needs checking.
+              A selector tells you very little on its own. ATLAS connects decoded calls to the
+              source record and supporting evidence, so you can inspect what is known and what still
+              needs checking.
             </p>
             <div className="atlas-context-tags" aria-label="ATLAS capabilities">
               <span>Source-aware lookups</span>
@@ -559,9 +558,7 @@ function Landing() {
               loading="lazy"
               decoding="async"
             />
-            <figcaption>
-              Illustrative artwork. ATLAS proof cards use real API responses.
-            </figcaption>
+            <figcaption>Illustrative artwork. ATLAS proof cards use real API responses.</figcaption>
           </figure>
         </section>
 
