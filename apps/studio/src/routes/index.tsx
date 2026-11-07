@@ -20,6 +20,12 @@ import "./landing.css";
 const CLI_COMMAND =
   "npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --timeout 45000 lookup 0x9010d07c --json";
 const API_LOOKUP = "/v1/functions/0x9010d07c";
+const SWARM_ROOT = "ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386";
+const SWARM_SHA = "0x67ec935b13fac924b07c7e98013c88f62ad7118f77361e6b93cb6cdeded949e4";
+const ENS_ALLOW = "0xf633e7fc17e2bbe0d0965d18ec1821dcb754a3d3";
+const ENS_DENY = "0xAd797f58aFD3265C00504382171eC0818262D3ca";
+type LiveProof = { status: "ready" | "verified" | "failed"; detail: string };
+
 
 const interfaces = [
   {
@@ -97,6 +103,14 @@ function Appearance() {
 function Landing() {
   const [copied, setCopied] = useState<"yes" | "no" | "failed">("no");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [checkingLive, setCheckingLive] = useState(false);
+  const [liveStarted, setLiveStarted] = useState(false);
+  const [liveChecks, setLiveChecks] = useState<Record<"arkiv" | "swarm" | "allowed" | "denied", LiveProof>>({
+    arkiv: { status: "ready", detail: "Ready for a real Arkiv lookup." },
+    swarm: { status: "ready", detail: "Ready for the verified Swarm manifest." },
+    allowed: { status: "ready", detail: "Ready for a granted ENSv2 permission check." },
+    denied: { status: "ready", detail: "Ready for a denied ENSv2 permission check." },
+  });
   const [statuses, setStatuses] = useState<Record<string, string> | null>(null);
   const [proof, setProof] = useState<{
     state: "loading" | "ok" | "unavailable";
@@ -138,6 +152,42 @@ function Landing() {
     }
   }
 
+
+  async function runLiveProof() {
+    if (checkingLive) return;
+    setCheckingLive(true);
+    setLiveStarted(true);
+    try {
+      const [arkiv, swarm, allowed, denied] = await Promise.all([
+        atlasClient.getFunctionBySelector("0x9010d07c"),
+        atlasClient.getSwarmArtifact(SWARM_ROOT),
+        atlasClient.checkEnsV2Role({ account: ENS_ALLOW, role: "1", resource: "0" }),
+        atlasClient.checkEnsV2Role({ account: ENS_DENY, role: "1", resource: "0" }),
+      ]);
+      const passed = {
+        arkiv: arkiv.kind === "ok" && arkiv.data.candidates.some((candidate) => candidate.signature === "getRoleMember(bytes32,uint256)" && !!candidate.entityKey),
+        swarm: swarm.kind === "ok" && swarm.data.sha256 === SWARM_SHA && swarm.data.reference === SWARM_ROOT,
+        allowed: allowed.kind === "ok" && allowed.data.chainId === 11155111 && allowed.data.authorized === true && allowed.data.requiredRoles === "1",
+        denied: denied.kind === "ok" && denied.data.chainId === 11155111 && denied.data.authorized === false && denied.data.requiredRoles === "1",
+      };
+      setLiveChecks({
+        arkiv: { status: passed.arkiv ? "verified" : "failed", detail: passed.arkiv ? "Canonical function found with Arkiv entity provenance." : "The live Arkiv response did not match." },
+        swarm: { status: passed.swarm ? "verified" : "failed", detail: passed.swarm ? "Stored manifest SHA-256 matches the pinned receipt." : "The live Swarm digest did not match." },
+        allowed: { status: passed.allowed ? "verified" : "failed", detail: passed.allowed ? "Sepolia EAC returned authorized: true." : "Granted ENSv2 role was not confirmed." },
+        denied: { status: passed.denied ? "verified" : "failed", detail: passed.denied ? "Sepolia EAC returned authorized: false." : "Denied ENSv2 role was not confirmed." },
+      });
+    } catch {
+      setLiveChecks({
+        arkiv: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+        swarm: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+        allowed: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+        denied: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+      });
+    } finally {
+      setCheckingLive(false);
+    }
+  }
+
   const navLinks = [
     { label: "Studio", to: "/studio" as const },
     { label: "CLI", to: "/developers" as const },
@@ -159,6 +209,7 @@ function Landing() {
                 <Logo />
               </Link>
               <nav className="atlas-landing-nav" aria-label="Website">
+                <a href="#live-demo">Live demo</a>
                 {navLinks.map((item) => (
                   <Link key={item.label} to={item.to}>
                     {item.label}
@@ -195,6 +246,7 @@ function Landing() {
                 className="atlas-mobile-menu"
                 aria-label="Mobile website navigation"
               >
+                <a href="#live-demo" onClick={() => setMobileOpen(false)}>Live demo</a>
                 {navLinks.map((item) => (
                   <Link key={item.label} to={item.to} onClick={() => setMobileOpen(false)}>
                     {item.label}
@@ -261,9 +313,9 @@ function Landing() {
                 <Link to="/studio" className="atlas-button-primary">
                   Open Studio <ArrowUpRight size={18} />
                 </Link>
-                <Link to="/docs" className="atlas-button-secondary">
-                  Explore the API <ArrowRight size={18} />
-                </Link>
+                <a href="#live-demo" className="atlas-button-secondary">
+                  Try live proof <ArrowRight size={18} />
+                </a>
               </div>
 
               <div className="atlas-trust-note">
@@ -317,6 +369,41 @@ function Landing() {
             </div>
           </section>
         </div>
+
+        <section id="live-demo" className="atlas-quick-guide" aria-labelledby="atlas-quick-title">
+          <div className="atlas-guide-header">
+            <div>
+              <span className="atlas-section-eyebrow">START HERE — NO WALLET REQUIRED</span>
+              <h2 id="atlas-quick-title">See the evidence in one click.</h2>
+            </div>
+            <p>First time using ATLAS? Test the public APIs without any setup. Green results only appear when a live response matches the known evidence.</p>
+            <button type="button" className="atlas-guide-run" disabled={checkingLive} onClick={() => void runLiveProof()}>
+              {checkingLive ? "Checking live APIs…" : liveStarted ? "Run fresh proof" : "Run live proof"}
+              <ArrowUpRight size={16}/>
+            </button>
+          </div>
+          <div className="atlas-guide-grid">
+            {([
+              ["arkiv","01","Arkiv · Find the real ABI","/v1/functions/0x9010d07c"],
+              ["swarm","02","Swarm · Verify the source root","/v1/artifacts/" + SWARM_ROOT],
+              ["allowed","03","ENSv2 · Granted permission","/v1/ensv2/roles/" + ENS_ALLOW + "?resource=0&role=1"],
+              ["denied","04","ENSv2 · Denied permission","/v1/ensv2/roles/" + ENS_DENY + "?resource=0&role=1"],
+            ] as const).map(([key,number,title,url]) => (
+              <article className="atlas-guide-card" key={key}>
+                <div className="atlas-guide-card-top">
+                  <span>{number}</span>
+                  <span role="status" className={"atlas-guide-status atlas-guide-status-"+liveChecks[key].status}>
+                    {checkingLive ? "CHECKING" : liveChecks[key].status === "verified" ? "LIVE VERIFIED" : liveChecks[key].status === "failed" ? "NOT VERIFIED" : "READY"}
+                  </span>
+                </div>
+                <h3>{title}</h3>
+                <p>{liveChecks[key].detail}</p>
+                <a href={url} target="_blank" rel="noreferrer">Inspect actual JSON <ExternalLink size={13}/></a>
+              </article>
+            ))}
+          </div>
+          <p className="atlas-guide-note">Evidence limits: one canonical Arkiv signature entity is live, while the Swarm dataset contains 3,892 extracted declarations. ENSv2 registry permissions do not establish ABI authorship. 0G inference and default Anon-RPC routing remain unverified.</p>
+        </section>
 
         <section className="atlas-landing-proof" aria-labelledby="atlas-proof-title">
           <div className="atlas-section-intro">
