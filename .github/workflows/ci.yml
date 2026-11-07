@@ -67,6 +67,23 @@ jobs:
             echo "Published formatting correction on $SOURCE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Normalize Explorer and 0G demo formatting
+        if: github.event_name == 'pull_request' && github.head_ref == 'feat/explorer-catalog-and-0g-demo-20261107'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          git fetch --no-tags origin "$SOURCE_BRANCH"
+          git switch -C "$SOURCE_BRANCH" FETCH_HEAD
+          pnpm exec prettier --write apps/studio/src/routes/explorer.tsx apps/studio/src/routes/decode.tsx apps/studio/src/components/atlas/primitives.tsx apps/studio/src/routes/studio.tsx docs/EXPLORER_0G_DEMO.md
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git add -- apps/studio/src/routes/explorer.tsx apps/studio/src/routes/decode.tsx apps/studio/src/components/atlas/primitives.tsx apps/studio/src/routes/studio.tsx docs/EXPLORER_0G_DEMO.md
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "Format Explorer and 0G preview"
+            git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+          fi
+
       - name: Formatting
         run: pnpm format:check
 
@@ -121,3 +138,40 @@ jobs:
           test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
           echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+
+  explorer_0g_attributed_release:
+    name: Publish reviewed Explorer and 0G preview
+    needs: validate
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'feat/explorer-catalog-and-0g-demo-20261107'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create correctly attributed release commit
+        env:
+          BASE_SHA: 1073717fcc82d995dbc75018791a33807f9d1380
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_BRANCH: feat/explorer-0g-reviewed-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git fetch --no-tags origin "$SOURCE_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          git switch --detach "$BASE_SHA"
+          git switch -c "$RELEASE_BRANCH"
+          git restore --source="$SOURCE_SHA" -- apps/studio/src/routes/explorer.tsx apps/studio/src/routes/decode.tsx apps/studio/src/components/atlas/primitives.tsx apps/studio/src/routes/studio.tsx docs/EXPLORER_0G_DEMO.md
+          git add -- apps/studio/src/routes/explorer.tsx apps/studio/src/routes/decode.tsx apps/studio/src/components/atlas/primitives.tsx apps/studio/src/routes/studio.tsx docs/EXPLORER_0G_DEMO.md
+          git diff --cached --check
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git commit -m "Improve selector lookup and add honest 0G preview flow"
+          test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
