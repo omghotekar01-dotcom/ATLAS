@@ -110,13 +110,29 @@ function Decoder() {
             <label htmlFor="cd" className="text-sm font-medium">
               Calldata
             </label>
-            <button
-              type="button"
-              onClick={() => setRaw(EXAMPLE)}
-              className="text-xs text-subtle hover:text-primary"
-            >
-              Insert example
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setRaw(ARKIV_EXAMPLE);
+                  setSample(false);
+                  setResult(null);
+                  setExplanation(null);
+                  setIllustration(false);
+                }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Load live Arkiv example
+              </button>
+              <button type="button" onClick={() => {
+                setRaw(EXAMPLE);
+                setResult(null);
+                setExplanation(null);
+                setIllustration(false);
+              }} className="text-xs text-subtle hover:text-primary">
+                ERC20 example (not imported)
+              </button>
+            </div>
           </div>
           <textarea
             id="cd"
@@ -125,6 +141,7 @@ function Decoder() {
               setRaw(e.target.value);
               setResult(null);
               setExplanation(null);
+              setIllustration(false);
             }}
             rows={8}
             spellCheck={false}
