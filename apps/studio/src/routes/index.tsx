@@ -209,6 +209,7 @@ function Landing() {
                 <Logo />
               </Link>
               <nav className="atlas-landing-nav" aria-label="Website">
+                <a href="#live-demo">Live demo</a>
                 {navLinks.map((item) => (
                   <Link key={item.label} to={item.to}>
                     {item.label}
@@ -245,6 +246,7 @@ function Landing() {
                 className="atlas-mobile-menu"
                 aria-label="Mobile website navigation"
               >
+                <a href="#live-demo" onClick={() => setMobileOpen(false)}>Live demo</a>
                 {navLinks.map((item) => (
                   <Link key={item.label} to={item.to} onClick={() => setMobileOpen(false)}>
                     {item.label}
@@ -311,9 +313,9 @@ function Landing() {
                 <Link to="/studio" className="atlas-button-primary">
                   Open Studio <ArrowUpRight size={18} />
                 </Link>
-                <Link to="/docs" className="atlas-button-secondary">
-                  Explore the API <ArrowRight size={18} />
-                </Link>
+                <a href="#live-demo" className="atlas-button-secondary">
+                  Try live proof <ArrowRight size={18} />
+                </a>
               </div>
 
               <div className="atlas-trust-note">
@@ -367,6 +369,41 @@ function Landing() {
             </div>
           </section>
         </div>
+
+        <section id="live-demo" className="atlas-quick-guide" aria-labelledby="atlas-quick-title">
+          <div className="atlas-guide-header">
+            <div>
+              <span className="atlas-section-eyebrow">START HERE — NO WALLET REQUIRED</span>
+              <h2 id="atlas-quick-title">See the evidence in one click.</h2>
+            </div>
+            <p>First time using ATLAS? Test the public APIs without any setup. Green results only appear when a live response matches the known evidence.</p>
+            <button type="button" className="atlas-guide-run" disabled={checkingLive} onClick={() => void runLiveProof()}>
+              {checkingLive ? "Checking live APIs…" : liveStarted ? "Run fresh proof" : "Run live proof"}
+              <ArrowUpRight size={16}/>
+            </button>
+          </div>
+          <div className="atlas-guide-grid">
+            {([
+              ["arkiv","01","Arkiv · Find the real ABI","/v1/functions/0x9010d07c"],
+              ["swarm","02","Swarm · Verify the source root","/v1/artifacts/" + SWARM_ROOT],
+              ["allowed","03","ENSv2 · Granted permission","/v1/ensv2/roles/" + ENS_ALLOW + "?resource=0&role=1"],
+              ["denied","04","ENSv2 · Denied permission","/v1/ensv2/roles/" + ENS_DENY + "?resource=0&role=1"],
+            ] as const).map(([key,number,title,url]) => (
+              <article className="atlas-guide-card" key={key}>
+                <div className="atlas-guide-card-top">
+                  <span>{number}</span>
+                  <span role="status" className={"atlas-guide-status atlas-guide-status-"+liveChecks[key].status}>
+                    {checkingLive ? "CHECKING" : liveChecks[key].status === "verified" ? "LIVE VERIFIED" : liveChecks[key].status === "failed" ? "NOT VERIFIED" : "READY"}
+                  </span>
+                </div>
+                <h3>{title}</h3>
+                <p>{liveChecks[key].detail}</p>
+                <a href={url} target="_blank" rel="noreferrer">Inspect actual JSON <ExternalLink size={13}/></a>
+              </article>
+            ))}
+          </div>
+          <p className="atlas-guide-note">Evidence limits: one canonical Arkiv signature entity is live, while the Swarm dataset contains 3,892 extracted declarations. ENSv2 registry permissions do not establish ABI authorship. 0G inference and default Anon-RPC routing remain unverified.</p>
+        </section>
 
         <section className="atlas-landing-proof" aria-labelledby="atlas-proof-title">
           <div className="atlas-section-intro">
