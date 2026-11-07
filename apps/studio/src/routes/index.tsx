@@ -20,6 +20,12 @@ import "./landing.css";
 const CLI_COMMAND =
   "npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --timeout 45000 lookup 0x9010d07c --json";
 const API_LOOKUP = "/v1/functions/0x9010d07c";
+const SWARM_ROOT = "ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386";
+const SWARM_SHA = "0x67ec935b13fac924b07c7e98013c88f62ad7118f77361e6b93cb6cdeded949e4";
+const ENS_ALLOW = "0xf633e7fc17e2bbe0d0965d18ec1821dcb754a3d3";
+const ENS_DENY = "0xAd797f58aFD3265C00504382171eC0818262D3ca";
+type LiveProof = { status: "ready" | "verified" | "failed"; detail: string };
+
 
 const interfaces = [
   {
@@ -97,6 +103,14 @@ function Appearance() {
 function Landing() {
   const [copied, setCopied] = useState<"yes" | "no" | "failed">("no");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [checkingLive, setCheckingLive] = useState(false);
+  const [liveStarted, setLiveStarted] = useState(false);
+  const [liveChecks, setLiveChecks] = useState<Record<"arkiv" | "swarm" | "allowed" | "denied", LiveProof>>({
+    arkiv: { status: "ready", detail: "Ready for a real Arkiv lookup." },
+    swarm: { status: "ready", detail: "Ready for the verified Swarm manifest." },
+    allowed: { status: "ready", detail: "Ready for a granted ENSv2 permission check." },
+    denied: { status: "ready", detail: "Ready for a denied ENSv2 permission check." },
+  });
   const [statuses, setStatuses] = useState<Record<string, string> | null>(null);
   const [proof, setProof] = useState<{
     state: "loading" | "ok" | "unavailable";
@@ -135,6 +149,42 @@ function Landing() {
       setCopied("yes");
     } catch {
       setCopied("failed");
+    }
+  }
+
+
+  async function runLiveProof() {
+    if (checkingLive) return;
+    setCheckingLive(true);
+    setLiveStarted(true);
+    try {
+      const [arkiv, swarm, allowed, denied] = await Promise.all([
+        atlasClient.getFunctionBySelector("0x9010d07c"),
+        atlasClient.getSwarmArtifact(SWARM_ROOT),
+        atlasClient.checkEnsV2Role({ account: ENS_ALLOW, role: "1", resource: "0" }),
+        atlasClient.checkEnsV2Role({ account: ENS_DENY, role: "1", resource: "0" }),
+      ]);
+      const passed = {
+        arkiv: arkiv.kind === "ok" && arkiv.data.candidates.some((candidate) => candidate.signature === "getRoleMember(bytes32,uint256)" && !!candidate.entityKey),
+        swarm: swarm.kind === "ok" && swarm.data.sha256 === SWARM_SHA && swarm.data.reference === SWARM_ROOT,
+        allowed: allowed.kind === "ok" && allowed.data.chainId === 11155111 && allowed.data.authorized === true && allowed.data.requiredRoles === "1",
+        denied: denied.kind === "ok" && denied.data.chainId === 11155111 && denied.data.authorized === false && denied.data.requiredRoles === "1",
+      };
+      setLiveChecks({
+        arkiv: { status: passed.arkiv ? "verified" : "failed", detail: passed.arkiv ? "Canonical function found with Arkiv entity provenance." : "The live Arkiv response did not match." },
+        swarm: { status: passed.swarm ? "verified" : "failed", detail: passed.swarm ? "Stored manifest SHA-256 matches the pinned receipt." : "The live Swarm digest did not match." },
+        allowed: { status: passed.allowed ? "verified" : "failed", detail: passed.allowed ? "Sepolia EAC returned authorized: true." : "Granted ENSv2 role was not confirmed." },
+        denied: { status: passed.denied ? "verified" : "failed", detail: passed.denied ? "Sepolia EAC returned authorized: false." : "Denied ENSv2 role was not confirmed." },
+      });
+    } catch {
+      setLiveChecks({
+        arkiv: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+        swarm: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+        allowed: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+        denied: { status: "failed", detail: "Request interrupted; open the JSON for details." },
+      });
+    } finally {
+      setCheckingLive(false);
     }
   }
 
