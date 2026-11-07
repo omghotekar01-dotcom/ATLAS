@@ -3,12 +3,38 @@
 Command-line client for the ATLAS REST API. Human-readable output by default,
 machine-readable JSON with `--json`. The CLI never writes to Arkiv.
 
-## Run from npm
+## Quick start
+
+**Published release (works today):**
 
 ```sh
-npx --yes --package=@omghotekar/atlas-cli@0.1.0 atlas --version
-npm install -g @omghotekar/atlas-cli@0.1.0
+# One-time global installation
+npm i -g @omghotekar/atlas-cli
+
+# Short commands after installation
+atlas lookup 0x9010d07c
+atlas doctor
+
+# No global installation required
+npx -y @omghotekar/atlas-cli lookup 0x9010d07c
 ```
+
+The no-install invocation relies on the package exposing a single executable named `atlas`.
+Node.js 22.18+ and a reachable ATLAS API are required. Existing commands remain available.
+
+**Next release (0.1.1, source implemented; publish after smoke verification):**
+
+```sh
+atlas try
+atlas try --json
+```
+
+`atlas try` requests the actual Arkiv lookup for selector `0x9010d07c` and
+requires the matching source-attributed OpenZeppelin entity to be present.
+It fails with a nonzero exit code if the API is offline or the record is missing.
+Do not describe `atlas try` as available on npm until 0.1.1 is published.
+
+## Release packaging
 
 ## Install the release archive
 
@@ -17,7 +43,7 @@ Requires Node.js 22.18 or newer. The public distribution name is
 below or download the release archive, then install it from any directory:
 
 ```sh
-npm install -g ./omghotekar-atlas-cli-0.1.0.tgz
+npm install -g ./omghotekar-atlas-cli-0.1.1.tgz
 atlas --version
 atlas --timeout 45000 lookup 0x9010d07c --json
 ```
@@ -66,6 +92,7 @@ atlas --help
 ## Commands
 
 ```sh
+atlas try                                      # Verified live Arkiv demo (0.1.1+)
 atlas doctor                                   # API + Arkiv health, read-only
 atlas integrations --json                      # configured sponsor status
 atlas lookup 0xa9059cbb                        # every candidate for a selector

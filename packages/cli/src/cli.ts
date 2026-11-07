@@ -32,7 +32,10 @@ import {
   formatTransaction,
 } from "./format.js";
 
-export const CLI_VERSION = "0.1.0";
+export const CLI_VERSION = "0.1.1";
+
+const DEMO_SELECTOR = "0x9010d07c";
+const DEMO_SIGNATURE = "getRoleMember(bytes32,uint256)";
 
 export interface CliClient {
   health(): Promise<HealthResponse>;
@@ -188,11 +191,56 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     .description("Query the ATLAS canonical signature registry and inspect EVM data.")
     .version(CLI_VERSION)
     .option("--api-url <url>", "ATLAS API base URL (defaults to ATLAS_API_URL)")
-    .option("--timeout <ms>", "request timeout in milliseconds", "15000")
+    .option("--timeout <ms>", "request timeout in milliseconds (default: 45000)", "45000")
     .exitOverride()
     .configureOutput({
       writeOut: (text) => stdout(text.trimEnd()),
       writeErr: (text) => stderr(text.trimEnd()),
+    });
+
+  program.addHelpText("beforeAll", "\nATLAS · Ethereum developer intelligence\n");
+  program.addHelpText(
+    "afterAll",
+    [
+      "",
+      "Quick start:",
+      "  atlas try                         Live Arkiv example",
+      "  atlas lookup 0x9010d07c           Look up a function selector",
+      "  atlas doctor                      Check backend connectivity",
+      "",
+      "Install: npm i -g @omghotekar/atlas-cli",
+      "No install: npx -y @omghotekar/atlas-cli lookup 0x9010d07c",
+      "",
+    ].join("\n"),
+  );
+
+  program
+    .command("try")
+    .description("Run a genuine Arkiv-backed lookup of the documented OpenZeppelin example")
+    .option("--json", "print the result as machine-readable JSON")
+    .action(async (_options: unknown, command: Command) => {
+      await perform(
+        async () => {
+          const result = await clientFor().lookupFunction(DEMO_SELECTOR);
+          const matched = result.candidates.some(
+            (candidate) =>
+              candidate.signature === DEMO_SIGNATURE && Boolean(candidate.entityKey),
+          );
+          if (result.registry !== "arkiv-rabdi" || !matched) {
+            throw new Error(
+              `Live Arkiv demo record ${DEMO_SELECTOR} is unavailable or missing source evidence. Run 'atlas doctor' and retry.`,
+            );
+          }
+          return result;
+        },
+        (result) =>
+          [
+            "ATLAS · Live Arkiv Rabdi example",
+            formatLookup(result),
+            "A matched signature is not proof of contract identity or safety.",
+          ].join("\n"),
+        Boolean(command.opts().json),
+      );
     });
 
   program

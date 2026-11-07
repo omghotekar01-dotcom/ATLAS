@@ -5,15 +5,11 @@ import { PageHeader, Panel } from "@/components/atlas/primitives";
 import { getApiBaseUrl } from "@/api/atlasClient";
 
 export const Route = createFileRoute("/developers")({ component: Developers });
-const npmPackage = "@omghotekar/atlas-cli@0.1.0";
-const runAtlas = `npx --yes --package=${npmPackage} atlas`;
 const examples = [
-  { title: "Check CLI version", command: `${runAtlas} --version` },
-  { title: "Check API and Arkiv", command: `${runAtlas} --timeout 45000 doctor` },
-  {
-    title: "Canonical Arkiv lookup",
-    command: `${runAtlas} --timeout 45000 lookup 0x9010d07c --json`,
-  },
+  { title: "Try without installing", command: "npx -y @omghotekar/atlas-cli lookup 0x9010d07c" },
+  { title: "Install once", command: "npm i -g @omghotekar/atlas-cli" },
+  { title: "Look up a selector", command: "atlas lookup 0x9010d07c" },
+  { title: "Check API and Arkiv", command: "atlas doctor" },
 ];
 function Developers() {
   const [copyMessage, setCopyMessage] = useState("");
@@ -41,7 +37,9 @@ function Developers() {
           </div>
           <p className="mb-4 text-sm text-muted-foreground">
             Run these commands from any directory with Node.js 22.18 or newer. The public CLI
-            defaults to the ATLAS API. Pass <code>--api-url</code> to query another deployment.
+            defaults to the ATLAS API. After installation, use short <code>atlas</code> commands.
+            Pass <code>--api-url</code> to use another deployment. The upcoming CLI release
+            adds <code>atlas try</code> after npm verification.
           </p>
           <a
             href="https://www.npmjs.com/package/@omghotekar/atlas-cli"
