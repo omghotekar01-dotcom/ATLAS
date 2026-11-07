@@ -42,6 +42,7 @@ function Explorer() {
   const [result, setResult] = useState<ApiResult<ExplorerResponse> | null>(null);
   const [community, setCommunity] = useState<ApiResult<CommunityLookupResult> | null>(null);
   const [communityLoading, setCommunityLoading] = useState(false);
+  const [automaticFallback, setAutomaticFallback] = useState(false);
   const { sample } = useSampleMode();
   const cls = classifyQuery(q);
   const canSubmit = cls.kind === "selector" || cls.kind === "signature" || cls.kind === "text";
@@ -49,33 +50,52 @@ function Explorer() {
   useEffect(() => {
     setResult(null);
     setCommunity(null);
+    setAutomaticFallback(false);
   }, [sample]);
 
-  async function run(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
+  async function executeLookup(input: string) {
+    const lookup = classifyQuery(input);
+    if (lookup.kind !== "selector" && lookup.kind !== "signature" && lookup.kind !== "text") return;
+    setResult(null);
+    setCommunity(null);
+    setAutomaticFallback(false);
     if (sample) {
-      const d = sampleLookup(cls.value);
+      const d = sampleLookup(lookup.value);
       const hasCandidates = "candidates" in d ? d.candidates.length > 0 : d.items.length > 0;
       setResult(hasCandidates ? { kind: "ok", data: d, sample: true } : { kind: "empty" });
       return;
     }
     setLoading(true);
     try {
-      setResult(
-        cls.kind === "selector"
-          ? await atlasClient.getFunctionBySelector(cls.value)
-          : await atlasClient.searchFunctions(cls.value),
-      );
+      const canonical =
+        lookup.kind === "selector"
+          ? await atlasClient.getFunctionBySelector(lookup.value)
+          : await atlasClient.searchFunctions(lookup.value);
+      setResult(canonical);
+      if (lookup.kind === "selector" && canonical.kind === "empty") {
+        setAutomaticFallback(true);
+        setCommunityLoading(true);
+        try {
+          setCommunity(await atlasClient.lookupCommunity(lookup.value));
+        } finally {
+          setCommunityLoading(false);
+        }
+      }
     } finally {
       setLoading(false);
     }
+  }
+
+  async function run(e: React.FormEvent) {
+    e.preventDefault();
+    await executeLookup(q);
   }
 
   async function compareCommunity() {
     if (sample || cls.kind !== "selector" || communityLoading) return;
     setCommunityLoading(true);
     setCommunity(null);
+    setAutomaticFallback(false);
     try {
       setCommunity(await atlasClient.lookupCommunity(cls.value));
     } finally {
@@ -115,7 +135,7 @@ function Explorer() {
       <PageHeader
         eyebrow="Search"
         title="Signature Explorer"
-        description="Resolve a 4-byte selector to candidate signatures, or find the selector for a known signature."
+        description="Search imported Arkiv records. Missing selectors automatically fetch separately labeled public community suggestions."
       >
         <SampleSwitch />
       </PageHeader>
@@ -134,6 +154,7 @@ function Explorer() {
                   setQ(e.target.value);
                   setResult(null);
                   setCommunity(null);
+                  setAutomaticFallback(false);
                 }}
                 placeholder="0xa9059cbb  or  transfer(address,uint256)"
                 spellCheck={false}
@@ -149,12 +170,15 @@ function Explorer() {
           </div>
           <div className="flex min-h-6 flex-wrap gap-2">
             {hint}
-            {(["0xa9059cbb", "transfer(address,uint256)", "0x095ea7b3"] as const).map((ex) => (
+            {(["0x9010d07c", "0xa9059cbb", "transfer(address,uint256)"] as const).map((ex) => (
               <button
                 type="button"
                 key={ex}
-                onClick={() => setQ(ex)}
-                className="font-mono text-xs text-subtle hover:text-primary"
+                onClick={() => {
+                  setQ(ex);
+                  void executeLookup(ex);
+                }}
+                className="rounded-md border border-border px-2 py-1 font-mono text-xs text-subtle hover:text-primary"
               >
                 {ex}
               </button>
@@ -169,7 +193,7 @@ function Explorer() {
             onClick={compareCommunity}
           >
             {communityLoading && <Loader2 className="size-4 animate-spin" />}
-            Compare with 4byte.directory
+            {communityLoading ? "Checking public directory…" : "Compare with 4byte.directory"}
           </Button>
           <p className="mt-2 text-xs text-subtle">
             Optional community suggestions only — never canonical Arkiv data, verified ABI or safety
@@ -179,14 +203,29 @@ function Explorer() {
       </Panel>
 
       <div className="mt-6 space-y-4" aria-live="polite">
-        {result && result.kind !== "ok" && <ResultState result={result} />}
+        {result?.kind === "empty" && !sample && automaticFallback ? (
+          <Banner tone="neutral" title="Not yet imported into Arkiv">
+            The canonical registry returned no entity for this selector.{" "}
+            {communityLoading
+              ? "Checking 4byte.directory suggestions…"
+              : "Public community suggestions are shown separately when available."}
+            Community records do not become canonical Arkiv records.
+          </Banner>
+        ) : (
+          result && result.kind !== "ok" && <ResultState result={result} />
+        )}
         {community && community.kind !== "ok" && <ResultState result={community} />}
         {community?.kind === "ok" && (
           <Panel>
             <h2 className="text-base font-semibold">4byte.directory · unverified candidates</h2>
             <p className="mt-1 text-sm text-subtle">
-              Community registry, not Arkiv canonical mirror.
+              {automaticFallback ? "Automatic fallback from a missing Arkiv record. " : ""}
+              Community registry, not Arkiv canonical mirror. These candidates may collide and are
+              not source verified.
               {community.data.truncated ? " Results may be incomplete." : ""}
+            </p>
+            <p className="mt-2 text-xs text-warning">
+              {community.data.candidates.length} unverified community candidates, not Arkiv imports.
             </p>
             <ul className="mt-3 space-y-2">
               {community.data.candidates.map((entry) => (
