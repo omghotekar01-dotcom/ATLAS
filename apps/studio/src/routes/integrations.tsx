@@ -5,6 +5,7 @@ import { PageHeader, Panel, Pill } from "@/components/atlas/primitives";
 import { atlasClient, getApiBaseUrl } from "@/api/atlasClient";
 import { EnsV2PermissionPanel } from "@/components/atlas/EnsV2PermissionPanel";
 import { anonymousBlockNumber, type AnonymousBlockProof } from "@/lib/atlas/anon-rpc";
+const PUBLIC_ETHEREUM_RPC = "https://ethereum-rpc.publicnode.com";
 
 type Health = Awaited<ReturnType<typeof atlasClient.health>>;
 type Artifact = Awaited<ReturnType<typeof atlasClient.getSwarmArtifact>>;
@@ -22,8 +23,8 @@ function Integrations() {
   > | null>(null);
   const [health, setHealth] = useState<Health | null>(null);
   const [loading, setLoading] = useState(false);
-  const [anonBootstrap, setAnonBootstrap] = useState("");
-  const [anonTarget, setAnonTarget] = useState("");
+  const [anonBootstrap, setAnonBootstrap] = useState(PUBLIC_ETHEREUM_RPC);
+  const [anonTarget, setAnonTarget] = useState(PUBLIC_ETHEREUM_RPC);
   const [anonProof, setAnonProof] = useState<AnonymousBlockProof | null>(null);
   const [anonError, setAnonError] = useState("");
   const [anonLoading, setAnonLoading] = useState(false);
@@ -39,7 +40,9 @@ function Integrations() {
       setAnonLoading(false);
     }
   }
-  const [swarmReference, setSwarmReference] = useState("");
+  const [swarmReference, setSwarmReference] = useState(
+    "ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487ae386",
+  );
   const [swarmResult, setSwarmResult] = useState<Artifact | null>(null);
   const [swarmLoading, setSwarmLoading] = useState(false);
   async function readSwarm() {
@@ -135,9 +138,10 @@ function Integrations() {
         <Panel>
           <h2 className="text-base font-semibold">Ethereum Foundation Anon-RPC · Nym</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Experimental, browser-only hash-pinned Nym worker. Bootstrap reads are direct. No
-            fallback on worker failure. Enter public HTTPS RPC URLs only (no API keys or wallet
-            secrets).
+            Real Nym browser-harness worker. One click attempts a public Ethereum block read through
+            the Nym transport; the specifier bootstrap is direct, and there is no fallback if Nym
+            fails. Public demo RPC URLs are prefilled and editable. No API keys or wallet secrets
+            are needed.
           </p>
           <form
             className="mt-3 space-y-2"
@@ -171,9 +175,13 @@ function Integrations() {
               disabled={anonLoading || !anonBootstrap.trim() || !anonTarget.trim()}
               className="h-10 rounded-lg bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50"
             >
-              {anonLoading ? "Starting Nym worker…" : "Read block through Nym"}
+              {anonLoading ? "Attempting genuine Nym read…" : "Run one-click LIVE Anon-RPC check"}
             </button>
           </form>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Default demo RPC: {PUBLIC_ETHEREUM_RPC}. A successful result counts as one real
+            browser-harness Nym read, not proof that all ATLAS API reads are anonymous.
+          </p>
           {anonProof && (
             <p role="status" className="mt-3 text-xs">
               Nym worker returned Ethereum block {anonProof.blockNumber}. {anonProof.warning}
@@ -186,6 +194,21 @@ function Integrations() {
           )}
         </Panel>
       </div>
+      <Panel className="mt-4 border-primary/20">
+        <h2 className="text-base font-semibold">0G · Live inference and local demonstration</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          ATLAS has an actual server-backed private-inference adapter, but it needs a valid 0G key,
+          model and credits configured on the server. Without them, Decoder offers a deterministic
+          explanation preview clearly marked NOT 0G, without fabricating a model response or request
+          ID.
+        </p>
+        <Link
+          to="/decode"
+          className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline"
+        >
+          Open 0G evidence explainer demo →
+        </Link>
+      </Panel>
       <Panel className="mt-4">
         <h2 className="text-base font-semibold">Swarm public artifact reader</h2>
         <p className="mt-2 text-sm text-muted-foreground">
