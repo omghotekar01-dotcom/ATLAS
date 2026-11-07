@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { atlasClient } from "@/api/atlasClient";
+import { anonymousBlockNumber, type AnonymousBlockProof } from "@/lib/atlas/anon-rpc";
 import { usePreferences, type ThemePref } from "@/lib/atlas/preferences";
 import "./landing.css";
 
@@ -23,6 +24,16 @@ const SWARM_ROOT = "ac56bcf0360fe3d011060a8011b2ea1e3d71b7408c354075e05fa69f487a
 const SWARM_SHA = "0x67ec935b13fac924b07c7e98013c88f62ad7118f77361e6b93cb6cdeded949e4";
 const ENS_ALLOW = "0xf633e7fc17e2bbe0d0965d18ec1821dcb754a3d3";
 const ENS_DENY = "0xAd797f58aFD3265C00504382171eC0818262D3ca";
+const LIVE_DEMO_CALLDATA = "0x9010d07c" + "0".repeat(128);
+const EF_PUBLIC_RPC = "https://ethereum-rpc.publicnode.com";
+type ZeroGShowcase = {
+  mode: "illustrative" | "live";
+  signature: string;
+  summary: string;
+  model?: string;
+  requestId?: string | null;
+  arguments: readonly string[];
+};
 type LiveProof = { status: "ready" | "verified" | "failed"; detail: string };
 
 const interfaces = [
@@ -101,6 +112,15 @@ function Appearance() {
 function Landing() {
   const [copied, setCopied] = useState<"yes" | "no" | "failed">("no");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [zeroGBusy, setZeroGBusy] = useState(false);
+  const [zeroGError, setZeroGError] = useState("");
+  const [zeroGShowcase, setZeroGShowcase] = useState<ZeroGShowcase | null>(null);
+  const [efBusy, setEfBusy] = useState(false);
+  const [efError, setEfError] = useState("");
+  const [efProof, setEfProof] = useState<AnonymousBlockProof | null>(null);
+  const [directBusy, setDirectBusy] = useState(false);
+  const [directError, setDirectError] = useState("");
+  const [directBlock, setDirectBlock] = useState<string | null>(null);
   const [checkingLive, setCheckingLive] = useState(false);
   const [liveStarted, setLiveStarted] = useState(false);
   const [liveChecks, setLiveChecks] = useState<
@@ -142,6 +162,100 @@ function Landing() {
       active = false;
     };
   }, []);
+
+  async function runZeroGShowcase(real: boolean) {
+    setZeroGBusy(true);
+    setZeroGError("");
+    setZeroGShowcase(null);
+    try {
+      const decode = await atlasClient.decodeCalldata(LIVE_DEMO_CALLDATA);
+      const candidate =
+        decode.kind === "ok"
+          ? decode.data.decoded.find((item) => item.decodeStatus === "success")
+          : null;
+      if (!candidate) {
+        setZeroGError(
+          "The live Arkiv decoder did not return a canonical candidate; explanation unavailable.",
+        );
+        return;
+      }
+      const args = candidate.arguments.map(
+        (item) => `${item.name || item.type} (${item.type}): ${String(item.value)}`,
+      );
+      if (!real) {
+        setZeroGShowcase({
+          mode: "illustrative",
+          signature: candidate.signature,
+          arguments: args,
+          summary:
+            "ATLAS decoded an access-control function with two input values using a real canonical source. The selector alone cannot prove which contract received the call, its execution result, or whether access was authorized. This explanatory text is fixed local logic; no 0G model was called.",
+        });
+        return;
+      }
+      const explanation = await atlasClient.explainCalldata(LIVE_DEMO_CALLDATA);
+      if (explanation.kind !== "ok" || explanation.data.provider !== "0g-private-computer") {
+        setZeroGError(
+          explanation.kind === "http-error"
+            ? explanation.message
+            : explanation.kind === "network-error"
+              ? explanation.message
+              : "Real 0G is not configured or did not return a valid inference. No model output was invented.",
+        );
+        return;
+      }
+      setZeroGShowcase({
+        mode: "live",
+        signature: candidate.signature,
+        arguments: args,
+        summary: explanation.data.explanation,
+        model: explanation.data.model,
+        requestId: explanation.data.requestId,
+      });
+    } catch (error) {
+      setZeroGError(error instanceof Error ? error.message : "The explanation request failed.");
+    } finally {
+      setZeroGBusy(false);
+    }
+  }
+
+  async function runEfNym() {
+    setEfBusy(true);
+    setEfError("");
+    setEfProof(null);
+    try {
+      setEfProof(await anonymousBlockNumber(EF_PUBLIC_RPC, EF_PUBLIC_RPC));
+    } catch (error) {
+      setEfError(
+        error instanceof Error ? error.message : "Nym worker failed; no direct fallback was used.",
+      );
+    } finally {
+      setEfBusy(false);
+    }
+  }
+
+  async function runEfDirect() {
+    setDirectBusy(true);
+    setDirectError("");
+    setDirectBlock(null);
+    try {
+      const res = await fetch(EF_PUBLIC_RPC, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", method: "eth_blockNumber", params: [], id: 1 }),
+        signal: AbortSignal.timeout(12000),
+      });
+      const data: unknown = await res.json();
+      const number = data && typeof data === "object" && "result" in data ? data.result : null;
+      if (!res.ok || typeof number !== "string" || !/^0x[0-9a-f]{1,64}$/i.test(number)) {
+        throw new Error("Public Ethereum RPC returned no valid block number.");
+      }
+      setDirectBlock(BigInt(number).toString());
+    } catch (error) {
+      setDirectError(error instanceof Error ? error.message : "Direct RPC not reachable.");
+    } finally {
+      setDirectBusy(false);
+    }
+  }
 
   async function copyCommand() {
     try {
@@ -245,6 +359,7 @@ function Landing() {
               </Link>
               <nav className="atlas-landing-nav" aria-label="Website">
                 <a href="#live-demo">Live demo</a>
+                <a href="#sponsor-labs">Sponsor labs</a>
                 {navLinks.map((item) => (
                   <Link key={item.label} to={item.to}>
                     {item.label}
@@ -284,6 +399,9 @@ function Landing() {
                 <a href="#live-demo" onClick={() => setMobileOpen(false)}>
                   Live demo
                 </a>
+                <a href="#sponsor-labs" onClick={() => setMobileOpen(false)}>
+                  Sponsor labs
+                </a>
                 {navLinks.map((item) => (
                   <Link key={item.label} to={item.to} onClick={() => setMobileOpen(false)}>
                     {item.label}
@@ -311,14 +429,14 @@ function Landing() {
                 </span>
               </h1>
               <p className="atlas-hero-summary">
-                Search contract signatures, decode calldata, inspect transactions, and trace results
-                back to their sources.
+                From an unknown selector to its actual source: inspect Ethereum calls, decode
+                inputs, and verify the evidence behind every answer.
               </p>
 
               <div className="atlas-terminal-card" id="terminal">
                 <div className="atlas-terminal-top">
                   <div className="atlas-terminal-label">
-                    <span className="atlas-terminal-indicator" /> TRY ATLAS IN YOUR TERMINAL
+                    <span className="atlas-terminal-indicator" /> GET A REAL ARKIV RESULT
                   </div>
                   <span className="atlas-terminal-node">NODE.JS</span>
                 </div>
@@ -479,6 +597,241 @@ function Landing() {
             contains 3,892 extracted declarations. ENSv2 registry permissions do not establish ABI
             authorship. 0G inference and default Anon-RPC routing remain unverified.
           </p>
+        </section>
+
+        <section id="workflow" className="atlas-journey" aria-labelledby="atlas-journey-title">
+          <div className="atlas-journey-head">
+            <div>
+              <span className="atlas-section-eyebrow">FROM RAW CALL TO REPRODUCIBLE EVIDENCE</span>
+              <h2 id="atlas-journey-title">One command. A full investigation.</h2>
+            </div>
+            <p>
+              Designed like a developer tool, not a black-box scanner. Every step retains its
+              source, output, and limitation.
+            </p>
+          </div>
+          <div className="atlas-journey-track">
+            {(
+              [
+                ["01", "Inspect", "Read a selector or calldata"],
+                ["02", "Resolve", "Query the Arkiv registry"],
+                ["03", "Decode", "Inspect typed arguments"],
+                ["04", "Verify", "Check Swarm and ENSv2"],
+                ["05", "Explain", "Optional 0G analysis"],
+                ["06", "Review", "Separate facts from hints"],
+              ] as const
+            ).map(([n, title, description]) => (
+              <div className="atlas-journey-step" key={n}>
+                <span>{n}</span>
+                <strong>{title}</strong>
+                <p>{description}</p>
+              </div>
+            ))}
+          </div>
+          <div className="atlas-journey-terminal">
+            <div>
+              <span className="atlas-journey-pulse" /> atlas / evidence workflow{" "}
+              <small>SOURCE CLI</small>
+            </div>
+            <code>node packages/cli/dist/bin.js demo</code>
+            <p>
+              5 live read checks: Arkiv · decode · Swarm · ENSv2 granted · ENSv2 denied. The 0G
+              preview is clearly illustrative, not a real inference call.
+            </p>
+            <Link to="/developers">
+              View CLI setup <ArrowUpRight size={15} />
+            </Link>
+          </div>
+        </section>
+
+        <section
+          id="sponsor-labs"
+          className="atlas-sponsor-labs"
+          aria-labelledby="atlas-sponsor-title"
+        >
+          <div className="atlas-section-intro atlas-sponsor-header">
+            <div>
+              <span className="atlas-section-eyebrow">SPONSOR LABS · OPEN TO EVERY VISITOR</span>
+              <h2 id="atlas-sponsor-title">
+                Two experiments. <em>Honest evidence.</em>
+              </h2>
+            </div>
+            <p>
+              Run real checks where possible. Illustrative output and direct public RPC reads never
+              masquerade as verified 0G or anonymous network traffic.
+            </p>
+          </div>
+          <div className="atlas-sponsor-grid">
+            <article className="atlas-sponsor-pane atlas-sponsor-pane-ai">
+              <div className="atlas-sponsor-pane-top">
+                <span className="atlas-lab-index">01 / 0G PRIVATE COMPUTER</span>
+                <span
+                  className={
+                    "atlas-lab-status " +
+                    (zeroGShowcase?.mode === "live" && zeroGShowcase.requestId
+                      ? "atlas-lab-ok"
+                      : "")
+                  }
+                >
+                  {zeroGShowcase?.mode === "live" && zeroGShowcase.requestId
+                    ? "REAL RESPONSE"
+                    : "LIVE API OPTIONAL"}
+                </span>
+              </div>
+              <h3>
+                From calldata to <em>context.</em>
+              </h3>
+              <p>
+                Decode a genuine Arkiv-backed call first. Preview the explanation without
+                credentials, or request real private inference through the ATLAS server.
+              </p>
+              <div className="atlas-lab-actions">
+                <button
+                  type="button"
+                  disabled={zeroGBusy}
+                  onClick={() => void runZeroGShowcase(false)}
+                >
+                  {zeroGBusy ? "Checking Arkiv…" : "Preview explanation"} <ArrowRight size={15} />
+                </button>
+                <button
+                  className="atlas-lab-alt"
+                  type="button"
+                  disabled={zeroGBusy}
+                  onClick={() => void runZeroGShowcase(true)}
+                >
+                  Request real 0G <ArrowUpRight size={15} />
+                </button>
+              </div>
+              <div className="atlas-lab-terminal" role="status" aria-live="polite">
+                <div className="atlas-lab-terminal-head">
+                  <span>atlas / explain</span>
+                  <span>{zeroGShowcase?.mode === "live" ? "0G API" : "DEMO"}</span>
+                </div>
+                {zeroGShowcase ? (
+                  <>
+                    <span
+                      className={
+                        "atlas-lab-mode " +
+                        (zeroGShowcase.mode === "illustrative" ? "atlas-lab-sample" : "")
+                      }
+                    >
+                      {zeroGShowcase.mode === "illustrative"
+                        ? "LOCAL ILLUSTRATION — NOT 0G INFERENCE"
+                        : zeroGShowcase.requestId
+                          ? "LIVE MODEL RESPONSE"
+                          : "MODEL RESPONSE — REQUEST ID MISSING"}
+                    </span>
+                    <code>{zeroGShowcase.signature}</code>
+                    <p>{zeroGShowcase.summary}</p>
+                    <small>
+                      {zeroGShowcase.mode === "live"
+                        ? `Model: ${zeroGShowcase.model ?? "not returned"} · Request ID: ${zeroGShowcase.requestId ?? "not supplied"}`
+                        : "Model: none · Request ID: none · 0G calls: 0"}
+                    </small>
+                  </>
+                ) : (
+                  <>
+                    <span className="atlas-lab-mode atlas-lab-pending">READY TO RUN</span>
+                    <code>0x9010d07c → getRoleMember(bytes32,uint256)</code>
+                    <p>
+                      Press Preview for a live Arkiv decode and a deterministic local explanation.
+                      Real inference requires a server-side 0G key, model and credits.
+                    </p>
+                  </>
+                )}
+                {zeroGError && (
+                  <p className="atlas-lab-error" role="alert">
+                    0G inference unavailable: {zeroGError}
+                  </p>
+                )}
+              </div>
+              <Link to="/decode" className="atlas-lab-deeplink">
+                Open Decoder workspace <ArrowUpRight size={15} />
+              </Link>
+            </article>
+
+            <article className="atlas-sponsor-pane atlas-sponsor-pane-privacy">
+              <div className="atlas-sponsor-pane-top">
+                <span className="atlas-lab-index">02 / ETHEREUM FOUNDATION · ANON-RPC</span>
+                <span className={"atlas-lab-status " + (efProof ? "atlas-lab-ok" : "")}>
+                  {efProof ? "NYM WORKER RETURNED DATA" : "BROWSER HARNESS"}
+                </span>
+              </div>
+              <h3>
+                Read Ethereum. <em>Show the path.</em>
+              </h3>
+              <p>
+                Compare a direct public block-number read against a real Nym browser worker attempt.
+                Nym failures do not silently fall back to direct RPC.
+              </p>
+              <div className="atlas-lab-actions">
+                <button type="button" disabled={efBusy} onClick={() => void runEfNym()}>
+                  {efBusy ? "Connecting via Nym…" : "Run live Nym read"} <ArrowRight size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="atlas-lab-alt"
+                  disabled={directBusy}
+                  onClick={() => void runEfDirect()}
+                >
+                  {directBusy ? "Reading public RPC…" : "Compare direct RPC"}{" "}
+                  <ArrowUpRight size={15} />
+                </button>
+              </div>
+              <div className="atlas-lab-terminal" role="status" aria-live="polite">
+                <div className="atlas-lab-terminal-head">
+                  <span>eth_blockNumber / mainnet</span>
+                  <span>NYM vs DIRECT</span>
+                </div>
+                <div className="atlas-rpc-comparison">
+                  <div>
+                    <small>NYM WORKER</small>
+                    <strong>{efProof ? `#${efProof.blockNumber}` : "—"}</strong>
+                    <span>
+                      {efProof
+                        ? "Real worker response"
+                        : efBusy
+                          ? "Request in progress"
+                          : "Not yet verified"}
+                    </span>
+                  </div>
+                  <div>
+                    <small>DIRECT PUBLIC RPC</small>
+                    <strong>{directBlock ? `#${directBlock}` : "—"}</strong>
+                    <span>
+                      {directBlock
+                        ? "Not anonymous"
+                        : directBusy
+                          ? "Request in progress"
+                          : "Optional comparison"}
+                    </span>
+                  </div>
+                </div>
+                {efProof && (
+                  <p className="atlas-lab-caption">
+                    Worker: {efProof.workerSpecifier}. {efProof.warning}
+                  </p>
+                )}
+                {efError && (
+                  <p className="atlas-lab-error" role="alert">
+                    Nym request failed: {efError}. No fallback was attempted.
+                  </p>
+                )}
+                {directError && (
+                  <p className="atlas-lab-error" role="alert">
+                    Direct RPC: {directError}
+                  </p>
+                )}
+                <small>
+                  Public test RPC: {EF_PUBLIC_RPC}. Bootstrap is direct; full ATLAS application
+                  routing is not yet anonymous.
+                </small>
+              </div>
+              <Link to="/integrations" className="atlas-lab-deeplink">
+                Open privacy &amp; sponsor integrations <ArrowUpRight size={15} />
+              </Link>
+            </article>
+          </div>
         </section>
 
         <section className="atlas-landing-proof" aria-labelledby="atlas-proof-title">
