@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
+import { DEMO, investigate, formatInvestigation } from "./workflow.js";
 import { Command, CommanderError } from "commander";
-import { AtlasSdkError, AtlasClient, DEFAULT_BASE_URL, type AtlasClientOptions } from "@atlas/sdk";
+import { AtlasSdkError, AtlasClient, type AtlasClientOptions } from "@atlas/sdk";
 import {
   LogInputSchema,
   type CalldataDecodeResult,
@@ -144,7 +145,7 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     program.opts<{ apiUrl?: string }>().apiUrl ??
     env.ATLAS_API_URL ??
     options.defaultApiUrl ??
-    DEFAULT_BASE_URL;
+    "https://atlas-ethglobal.vercel.app";
 
   const fail = (error: unknown): void => {
     if (error instanceof AtlasSdkError) {
@@ -186,9 +187,30 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     }
   };
 
+  const performInvestigation = async (
+    work: () => ReturnType<typeof investigate>,
+    json: boolean,
+    requireAllLive: boolean,
+    requireZeroG: boolean,
+  ): Promise<void> => {
+    try {
+      const report = await work();
+      stdout(json ? JSON.stringify(report, null, 2) : formatInvestigation(report));
+      if (requireAllLive && report.verified < 5) exitCode = 1;
+      if (
+        requireZeroG &&
+        !report.checks.some((check) =>
+          check.source.startsWith("0G Private Computer") && check.state === "verified"
+        )
+      ) exitCode = 1;
+    } catch (error) {
+      fail(error);
+    }
+  };
+
   program
     .name("atlas")
-    .description("Query the ATLAS canonical signature registry and inspect EVM data.")
+    .description("Investigate Ethereum calls: decode, verify Arkiv sources, Swarm evidence and ENSv2 permissions.")
     .version(CLI_VERSION)
     .option("--api-url <url>", "ATLAS API base URL (defaults to ATLAS_API_URL)")
     .option("--timeout <ms>", "request timeout in milliseconds (default: 45000)", "45000")
@@ -204,6 +226,9 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
     [
       "",
       "Quick start:",
+      "  atlas demo                        Real Arkiv + calldata + Swarm + ENSv2 checks",
+      "  atlas inspect 0xa9059cbb          Canonical lookup and separate community hints",
+      "  atlas inspect 0x9010d07c --full  Verify source and cross-sponsor evidence",
       "  atlas try                         Live Arkiv example",
       "  atlas lookup 0x9010d07c           Look up a function selector",
       "  atlas doctor                      Check backend connectivity",
@@ -213,6 +238,55 @@ export async function run(argv: string[], options: RunOptions = {}): Promise<num
       "",
     ].join("\n"),
   );
+
+  program
+    .command("inspect")
+    .argument("[input]", "4-byte selector or complete ABI-aligned calldata", DEMO.selector)
+    .description("Run the core ATLAS investigation: canonical lookup, provenance, optional decode and evidence")
+    .option("--full", "also verify real Swarm root and ENSv2 on-chain permission reads")
+    .option("--no-community", "skip unverified public 4byte.directory comparisons")
+    .option("--0g-demo", "add clearly labeled deterministic local illustration (no AI call)")
+    .option("--0g-live", "request actual server-side 0G private inference for calldata")
+    .option("--json", "print structured evidence, states and source records")
+    .action(async (input: string, _opts: unknown, command: Command) => {
+      const o = command.opts<{
+        full?: boolean; community?: boolean; "0gDemo"?: boolean;
+        "0gLive"?: boolean; json?: boolean; zeroGDemo?: boolean; zeroGLive?: boolean;
+      }>();
+      if ((o["0gDemo"] ?? o.zeroGDemo) && (o["0gLive"] ?? o.zeroGLive)) {
+        fail(new UsageError("Choose only one of --0g-demo or --0g-live."));
+        return;
+      }
+      await performInvestigation(
+        () => investigate(clientFor(), input, {
+          full: Boolean(o.full),
+          community: o.community !== false,
+          zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : (o["0gDemo"] ?? o.zeroGDemo) ? "illustration" : "none",
+        }),
+        Boolean(o.json),
+        false,
+        Boolean(o["0gLive"] ?? o.zeroGLive),
+      );
+    });
+
+  program
+    .command("demo")
+    .description("One-command real ATLAS workflow: Arkiv decode, Swarm digest, ENSv2 checks, 0G-style local preview")
+    .option("--0g-live", "use the real 0G server adapter instead of a labeled illustration")
+    .option("--json", "print complete raw provenance and evidence JSON")
+    .action(async (_opts: unknown, command: Command) => {
+      const o = command.opts<{ "0gLive"?: boolean; zeroGLive?: boolean; json?: boolean }>();
+      await performInvestigation(
+        () => investigate(clientFor(), DEMO.calldata, {
+          full: true,
+          community: false,
+          zeroG: (o["0gLive"] ?? o.zeroGLive) ? "real" : "illustration",
+        }),
+        Boolean(o.json),
+        true,
+        Boolean(o["0gLive"] ?? o.zeroGLive),
+      );
+    });
 
   program
     .command("try")

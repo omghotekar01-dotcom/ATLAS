@@ -10,6 +10,10 @@ const examples = [
   { title: "Install once", command: "npm i -g @omghotekar/atlas-cli" },
   { title: "Look up a selector", command: "atlas lookup 0x9010d07c" },
   { title: "Check API and Arkiv", command: "atlas doctor" },
+  { title: "Full actual source demo (v0.1.1 source checkout)", command: "node packages/cli/dist/bin.js demo" },
+  { title: "Investigate any selector (v0.1.1 source checkout)", command: "node packages/cli/dist/bin.js inspect 0xa9059cbb" },
+  { title: "Full sponsor evidence (v0.1.1 source checkout)", command: "node packages/cli/dist/bin.js inspect 0x9010d07c --full" },
+  { title: "Real 0G inference (requires server key/model)", command: "node packages/cli/dist/bin.js demo --0g-live" },
 ];
 function Developers() {
   const [copyMessage, setCopyMessage] = useState("");
@@ -39,7 +43,7 @@ function Developers() {
             Run these commands from any directory with Node.js 22.18 or newer. The public CLI
             defaults to the ATLAS API. After installation, use short <code>atlas</code> commands.
             Pass <code>--api-url</code> to use another deployment. The upcoming CLI release adds{" "}
-            <code>atlas try</code> after npm verification.
+            <code>atlas try</code>, <code>atlas inspect</code> and <code>atlas demo</code> after npm verification. Build the source checkout to run the new commands now.
           </p>
           <a
             href="https://www.npmjs.com/package/@omghotekar/atlas-cli"
@@ -80,7 +84,7 @@ function Developers() {
               <h2 className="text-base font-semibold">Trust boundaries</h2>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              The <strong>lookup</strong> command queries canonical source-provenanced records.{" "}
+              <strong>inspect</strong> and <strong>demo</strong> run the actual lookup/decode and optional Swarm/ENSv2 evidence. The <strong>lookup</strong> command queries canonical source-provenanced records.{" "}
               <strong>4byte</strong> reads optional community guesses. Never treat a selector match
               as contract identity, a verified ABI, or a safety guarantee.
             </p>
@@ -90,6 +94,18 @@ function Developers() {
             >
               Open Signature Explorer
             </Link>
+          </Panel>
+          <Panel>
+            <h2 className="text-base font-semibold">Sponsor demo shortcuts</h2>
+            <div className="mt-3 space-y-2 text-sm">
+              <Link to="/decode" className="block text-primary hover:underline">
+                0G-style local preview / real private inference →
+              </Link>
+              <Link to="/integrations" className="block text-primary hover:underline">
+                Ethereum Foundation Anon-RPC live Nym worker →
+              </Link>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">CLI output never invents 0G request IDs or claims Node traffic went through Nym. Real 0G requires credentials, and the browser-based EF experiment is separate.</p>
           </Panel>
           <Panel>
             <h2 className="text-base font-semibold">API connection</h2>

@@ -184,9 +184,9 @@ function Result({ result }: { result: ApiResult<TransactionInvestigation> | null
 }
 
 function Transactions() {
-  const [privacy, setPrivacy] = useState(false);
-  const [bootstrap, setBootstrap] = useState("");
-  const [target, setTarget] = useState("");
+  const [privacy, setPrivacy] = useState(true);
+  const [bootstrap, setBootstrap] = useState("https://ethereum-rpc.publicnode.com");
+  const [target, setTarget] = useState("https://ethereum-rpc.publicnode.com");
   const [anon, setAnon] = useState<Awaited<ReturnType<typeof anonymousTransaction>> | null>(null);
   const [counts, setCounts] = useState({ anon: 0, failed: 0, direct: 0 });
   const [hash, setHash] = useState("");
@@ -286,11 +286,11 @@ function Transactions() {
                 setAnon(null);
               }}
             />
-            Use Nym privacy mode
+            Use Nym privacy mode (default for Transaction Lab)
           </label>
           <p className="text-xs text-muted-foreground">
             {privacy
-              ? "Nym reads the transaction in this browser. Specifier bootstrap is direct. Decode and receipts are excluded. No direct fallback."
+              ? "Nym worker reads the transaction privately if available. The specifier bootstrap remains direct; decoding and receipts are excluded. No direct fallback and no hidden direct RPC."
               : "Standard analysis uses the API's configured direct RPC."}
           </p>
           {privacy && (
