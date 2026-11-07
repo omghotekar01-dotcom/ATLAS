@@ -121,3 +121,40 @@ jobs:
           test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
           git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
           echo "Release branch: $RELEASE_BRANCH" >> "$GITHUB_STEP_SUMMARY"
+
+  final_formatted_proof_release:
+    name: Publish fully tested landing with correct author
+    needs: validate
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'feat/atlas-final-formatted-proof-20261107'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out reviewed commit history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Publish reviewed formatted pages
+        env:
+          BASE_SHA: 1a565e7263db105afa21efe0b3f3e15f8883a28c
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_BRANCH: feat/atlas-final-reviewed-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          git fetch --no-tags origin "$SOURCE_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          git switch --detach "$BASE_SHA"
+          git switch -c "$RELEASE_BRANCH"
+          git restore --source="$SOURCE_SHA" -- apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css
+          git add -- apps/studio/src/routes/index.tsx apps/studio/src/routes/landing.css
+          git diff --cached --check
+          git config user.name "Om Ghotekar"
+          git config user.email "omghotekar01@gmail.com"
+          git commit -m "Polish ATLAS landing and add genuine sponsor evidence"
+          test "$(git log -1 --format='%an <%ae>')" = "Om Ghotekar <omghotekar01@gmail.com>"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
